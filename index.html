@@ -6,16 +6,19 @@
   <title>Riadath | Portfolio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="topbar">
-    <div class="logo">Riadath</div>
+    <div class="logo">Reyadath Ullah Akib</div>
     <nav class="nav" id="nav">
-      <a href="#home">Home</a>
-      <a href="#work">Projects</a>
-      <a href="#about">About</a>
+      <a href="#home">Intro</a>
+      <a href="#research">Research</a>
+      <a href="#experience">Experience</a>
+      <a href="#projects">Projects</a>
+      <a href="#embedded">Embedded</a>
+      <a href="#skills">Skills</a>
       <a href="#contact">Contact</a>
     </nav>
     <button class="menu" id="menu" aria-label="Toggle navigation">
@@ -28,92 +31,264 @@
   <main>
     <section class="hero" id="home">
       <div class="hero__content">
-        <p class="eyebrow">Portfolio</p>
-        <h1>Hi, I'm Riadath.</h1>
-        <p class="lede">I build clean, thoughtful web experiences with a focus on clarity and performance.</p>
+        <p class="eyebrow">Research-first engineer</p>
+        <h1>Reyadath Ullah Akib</h1>
+        <p class="lede">Engineer at Samsung R&D Institute Bangladesh. Researcher in green networking and federated learning. I like honest code, clear documentation, and systems that run fast.</p>
+        <div class="meta">
+          <span>Email: <a href="mailto:akib152012@gmail.com">akib152012@gmail.com</a></span>
+          <span>Phone: <a href="tel:+8801706360269">+8801706360269</a></span>
+          <span>Dhaka, Bangladesh</span>
+        </div>
         <div class="actions">
-          <a class="btn primary" href="#work">View work</a>
-          <a class="btn ghost" href="#contact">Get in touch</a>
+          <a class="btn primary" href="#research">Research</a>
+          <a class="btn ghost" href="#projects">Projects</a>
         </div>
       </div>
       <div class="hero__panel">
-        <div class="card stat">
-          <p class="label">Specialty</p>
-          <p class="value">Frontend & JS</p>
+        <div class="panel-top">
+          <figure class="card portrait">
+            <img src="reyadath.jpg" alt="Portrait of Reyadath Ullah Akib">
+          </figure>
+          <div class="stack-cards">
+            <div class="card stat compact">
+              <p class="label">Role</p>
+              <p class="value">Engineer I, Samsung R&D</p>
+            </div>
+            <div class="card stat compact">
+              <p class="label">Education</p>
+              <p class="value">B.Sc. CSE, University of Dhaka</p>
+              <p class="muted">Top 10% of class</p>
+            </div>
+          </div>
         </div>
-        <div class="card stat">
-          <p class="label">Focus</p>
-          <p class="value">Web performance</p>
-        </div>
-        <div class="card stat">
-          <p class="label">Location</p>
-          <p class="value">Earth</p>
+        <div class="panel-bottom card stat interests">
+          <p class="label">Research Interests</p>
+          <ul>
+            <li>Distributed Learning</li>
+            <li>Machine Learning</li>
+            <li>Embedded Systems</li>
+            <li>Edge Intelligence</li>
+            <li>Mobile Computing</li>
+            <li>High Performance Computing</li>
+          </ul>
         </div>
       </div>
     </section>
 
-    <section class="section" id="work">
+    <section class="section" id="research">
       <div class="section__header">
-        <p class="eyebrow">Selected work</p>
-        <h2>Projects</h2>
+        <p class="eyebrow">Research & Publications</p>
+        <h2>Current work</h2>
+      </div>
+      <div class="stacked">
+        <article class="card list-item">
+          <h3><a href="https://link.springer.com/chapter/10.1007/978-3-031-92608-2_20" target="_blank" rel="noreferrer">Federated Deep Reinforcement Learning for Optimal Resource Allocation in Vehicular Edge Computing</a></h3>
+          <p class="muted">SAI Computing Conference 2025 · London</p>
+          <p>Co-authored with Ittehad Chowdhury, Md. Abdur Razzaque, Palash Roy, Mohammad Mehedi Hassan.</p>
+        </article>
+        <article class="card list-item">
+          <h3><a href="https://supplychaininsider.org/ojs/index.php/home/article/view/103" target="_blank" rel="noreferrer">Reducing Complexity in Exporting RMG Products Using AI in Bangladesh</a></h3>
+          <p class="muted">Supply Chain Insider, Vol 12, Issue 01</p>
+          <p>Co-authored with Ahmed Shakibul Islam, Toma Ray, Nusrat Najnen Eva.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="experience">
+      <div class="section__header">
+        <p class="eyebrow">Experience</p>
+        <h2>What I’m doing</h2>
+      </div>
+      <div class="stacked">
+        <article class="card list-item highlight">
+          <div class="chip">Present</div>
+          <h3><a href="https://research.samsung.com/srbd" target="_blank" rel="noreferrer">Samsung R&D Institute Bangladesh</a> — Engineer I</h3>
+          <p class="muted">Aug 2025 – Present</p>
+          <ul>
+            <li>Developing SDKs for Samsung Tizen OS with an emphasis on reliability and developer ergonomics.</li>
+            <li>Partnering with platform teams to improve performance.</li>
+          </ul>
+        </article>
+        <article class="card list-item">
+          <h3>Green Networking Research Group — University of Dhaka</h3>
+          <p class="muted">Researcher · Sep 2023 – Present</p>
+          <ul>
+            <li>Exploring federated learning and resource allocation in vehicular edge computing.</li>
+            <li>Focusing on energy-aware systems and reliable networking at scale.</li>
+          </ul>
+        </article>
+        <article class="card list-item">
+          <h3><a href="https://www.turing.com" target="_blank" rel="noreferrer">Turing</a> (Remote) — Python Developer (Team Lead)</h3>
+          <p class="muted">Dec 2023 – Dec 2024</p>
+          <ul>
+            <li>Led a team of 6–8 engineers refining data pipelines for training AI models.</li>
+            <li>Automated workflows and deployment using Bash and Python scripts.</li>
+          </ul>
+        </article>
+        <article class="card list-item">
+          <h3><a href="https://codexpro.eu/" target="_blank" rel="noreferrer">CodexPro</a> (Remote) — Python Instructor</h3>
+          <p class="muted">Jan 2023 – Aug 2023</p>
+          <ul>
+            <li>Taught basic to intermediate Python (English batches).</li>
+            <li>Helped design course materials for Python and Scratch.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="projects">
+      <div class="section__header">
+        <p class="eyebrow">Selected Projects</p>
+        <h2>Recent builds</h2>
       </div>
       <div class="grid">
         <article class="card project">
-          <div class="chip">Web App</div>
-          <h3>Project Title</h3>
-          <p>Brief description of what the project does and why it matters.</p>
+          <div class="chip">Platform</div>
+          <h3>CoLab (Jul 2024)</h3>
+          <p>Collaborative platform for sharing projects and blogs; backend owner with FastAPI.</p>
+          <p class="muted">React · FastAPI · Python · CSS Modules</p>
           <div class="links">
-            <a href="#">Live</a>
-            <a href="#">Code</a>
+            <a href="https://github.com/KrabbyKrabby/CO-LAB" target="_blank" rel="noreferrer">Repo</a>
           </div>
         </article>
         <article class="card project">
-          <div class="chip">UI Design</div>
-          <h3>Project Title</h3>
-          <p>Another spotlight with a concise note on the stack or approach.</p>
+          <div class="chip">Product</div>
+          <h3>DormBuddy (Oct 2023)</h3>
+          <p>Hostel finding/listing app for students with separate frontend/backend services.</p>
+          <p class="muted">Python · ReactJS · Spring Boot</p>
           <div class="links">
-            <a href="#">Live</a>
-            <a href="#">Code</a>
+            <a href="https://github.com/KrabbyKrabby/dormbuddy/tree/main/frontend" target="_blank" rel="noreferrer">Frontend</a>
+            <a href="https://github.com/riadath/dormbuddy_backend" target="_blank" rel="noreferrer">Backend</a>
           </div>
         </article>
         <article class="card project">
-          <div class="chip">Tooling</div>
-          <h3>Project Title</h3>
-          <p>Drop in real work here—automations, dashboards, or experiments.</p>
+          <div class="chip">Mobile</div>
+          <h3>CSEDU App (Nov 2022)</h3>
+          <p>Android app for the CSE department; built with Flutter and Firebase.</p>
+          <p class="muted">Dart · Flutter · Firebase</p>
           <div class="links">
-            <a href="#">Live</a>
-            <a href="#">Code</a>
+            <a href="https://github.com/riadath/csedu" target="_blank" rel="noreferrer">Repo</a>
+          </div>
+        </article>
+        <article class="card project">
+          <div class="chip">Games</div>
+          <h3>Project Z (Jun 2021)</h3>
+          <p>Retro 2D games inside an open-world RPG; SDL and C/C++.</p>
+          <p class="muted">C/C++ · SDL</p>
+          <div class="links">
+            <a href="https://github.com/riadath/ProjectZ" target="_blank" rel="noreferrer">Repo</a>
           </div>
         </article>
       </div>
     </section>
 
-    <section class="section two-col" id="about">
-      <div>
-        <p class="eyebrow">About</p>
-        <h2>Who I am</h2>
+    <section class="section" id="embedded">
+      <div class="section__header">
+        <p class="eyebrow">Embedded Programming</p>
+        <h2>Low-level builds</h2>
       </div>
+      <div class="stacked">
+        <article class="card list-item">
+          <h3>Device Drivers for STM32F4xx (2023)</h3>
+          <p class="muted">I2C, SPI, UART drivers from scratch (no external libs).</p>
+          <div class="links">
+            <a href="https://github.com/riadath/traffic_system_i2c" target="_blank" rel="noreferrer">I2C</a>
+            <a href="https://github.com/riadath/traffic_system_spi" target="_blank" rel="noreferrer">SPI</a>
+            <a href="https://github.com/riadath/traffic_system_usart" target="_blank" rel="noreferrer">UART/USART</a>
+          </div>
+          <p class="muted">C/C++ · Register-level programming · Keil MDK</p>
+        </article>
+        <article class="card list-item">
+          <h3><a href="https://github.com/riadath/DUOS_modified" target="_blank" rel="noreferrer">DUOS (RTOS) for ARM Cortex-M4</a></h3>
+          <p class="muted">Real-time OS for ARM Cortex-M4 microcontrollers.</p>
+          <p class="muted">C/C++ · ARM Assembly · CMake · Register-level programming</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section two-col" id="skills">
       <div>
-        <p>I'm a developer who enjoys shipping polished interfaces and performant code. I like pairing with teams that care about the details—accessibility, speed, and maintainable systems.</p>
-        <p>Currently open for freelance and full-time opportunities. If you have a project in mind, let's talk.</p>
+        <p class="eyebrow">Skills</p>
+        <h2>Toolbox</h2>
+      </div>
+      <div class="stacked tight skills-list">
+        <div class="card list-item">
+          <h3>Languages</h3>
+          <p class="muted">C/C++, Java, Python, JavaScript, ARM Assembly, Dart</p>
+        </div>
+        <div class="card list-item">
+          <h3>Frameworks & Libraries</h3>
+          <p class="muted">Flutter, Flower (FL), PyTorch, React, Spring Boot, JavaFX, SDL</p>
+        </div>
+        <div class="card list-item">
+          <h3>Databases</h3>
+          <p class="muted">PostgreSQL, Firebase, MongoDB, SQLite</p>
+        </div>
+        <div class="card list-item">
+          <h3>Misc</h3>
+          <p class="muted">Embedded (ARM Cortex-M4), Git, Arduino, Socket Programming (Python)</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section two-col" id="education">
+      <div>
+        <p class="eyebrow">Education</p>
+        <h2>University of Dhaka</h2>
+      </div>
+      <div class="card list-item">
+        <p class="muted">B.Sc. in Computer Science and Engineering · Jan 2020 – Mar 2025</p>
+        <p>CGPA: 3.73 (top 10% of class)</p>
+      </div>
+    </section>
+
+    <section class="section" id="competitions">
+      <div class="section__header">
+        <p class="eyebrow">Competitive Programming & CTF</p>
+        <h2>Highlights</h2>
+      </div>
+      <div class="stacked">
+        <div class="card list-item">
+          <p class="muted">ICPC Asia Dhaka Regional 2024 · 54th place (Top 17%)</p>
+        </div>
+        <div class="card list-item">
+          <p class="muted">DU CTF 2023 · 2nd Runner Up</p>
+        </div>
+        <div class="card list-item">
+          <p class="muted">EWU National Robofest CTF 2024 · 7th Final, 6th Preliminary</p>
+        </div>
+        <div class="card list-item">
+          <p class="muted">BUET CTF 2024 · 12th Final, 3rd Preliminary</p>
+        </div>
+        <div class="card list-item">
+          <p class="muted">
+            Problem solving: 900+ total
+            · <a href="https://github.com/riadath/problem-solves" target="_blank" rel="noreferrer">Repo</a>
+            · <a href="https://codeforces.com/profile/riadath" target="_blank" rel="noreferrer">Codeforces 571</a>
+            · <a href="https://lightoj.com/user/riadath" target="_blank" rel="noreferrer">LightOJ 109</a>
+            · <a href="https://uhunt.onlinejudge.org/id/1056293" target="_blank" rel="noreferrer">UVA 148</a>
+            · <a href="https://www.stopstalk.com/user/profile/riadath" target="_blank" rel="noreferrer">StopStalk 150+</a>
+          </p>
+        </div>
       </div>
     </section>
 
     <section class="section contact" id="contact">
       <div>
         <p class="eyebrow">Contact</p>
-        <h2>Let’s build something</h2>
-        <p>Reach out for collaborations, consulting, or just to say hello.</p>
+        <h2>Let’s talk</h2>
+        <p>Reach out for collaborations, consulting, or research conversations.</p>
       </div>
       <div class="contact__actions">
-        <a class="btn primary" href="mailto:hello@example.com">Email me</a>
+        <a class="btn primary" href="mailto:akib152012@gmail.com">Email me</a>
         <a class="btn ghost" href="https://www.linkedin.com" target="_blank" rel="noreferrer">LinkedIn</a>
+        <a class="btn ghost" href="tel:+8801706360269">Call</a>
       </div>
     </section>
   </main>
 
   <footer class="footer">
-    <p>© <span id="year"></span> Riadath. Built with HTML, CSS, and JS.</p>
+    <p>© <span id="year"></span> Reyadath Ullah Akib. HTML · CSS · JS.</p>
   </footer>
 
   <script src="script.js"></script>
