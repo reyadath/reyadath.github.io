@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Riadath | Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="logo">Riadath</div>
+    <nav class="nav" id="nav">
+      <a href="#home">Home</a>
+      <a href="#work">Projects</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <button class="menu" id="menu" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero__content">
+        <p class="eyebrow">Portfolio</p>
+        <h1>Hi, I'm Riadath.</h1>
+        <p class="lede">I build clean, thoughtful web experiences with a focus on clarity and performance.</p>
+        <div class="actions">
+          <a class="btn primary" href="#work">View work</a>
+          <a class="btn ghost" href="#contact">Get in touch</a>
+        </div>
+      </div>
+      <div class="hero__panel">
+        <div class="card stat">
+          <p class="label">Specialty</p>
+          <p class="value">Frontend & JS</p>
+        </div>
+        <div class="card stat">
+          <p class="label">Focus</p>
+          <p class="value">Web performance</p>
+        </div>
+        <div class="card stat">
+          <p class="label">Location</p>
+          <p class="value">Earth</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="work">
+      <div class="section__header">
+        <p class="eyebrow">Selected work</p>
+        <h2>Projects</h2>
+      </div>
+      <div class="grid">
+        <article class="card project">
+          <div class="chip">Web App</div>
+          <h3>Project Title</h3>
+          <p>Brief description of what the project does and why it matters.</p>
+          <div class="links">
+            <a href="#">Live</a>
+            <a href="#">Code</a>
+          </div>
+        </article>
+        <article class="card project">
+          <div class="chip">UI Design</div>
+          <h3>Project Title</h3>
+          <p>Another spotlight with a concise note on the stack or approach.</p>
+          <div class="links">
+            <a href="#">Live</a>
+            <a href="#">Code</a>
+          </div>
+        </article>
+        <article class="card project">
+          <div class="chip">Tooling</div>
+          <h3>Project Title</h3>
+          <p>Drop in real work here—automations, dashboards, or experiments.</p>
+          <div class="links">
+            <a href="#">Live</a>
+            <a href="#">Code</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section two-col" id="about">
+      <div>
+        <p class="eyebrow">About</p>
+        <h2>Who I am</h2>
+      </div>
+      <div>
+        <p>I'm a developer who enjoys shipping polished interfaces and performant code. I like pairing with teams that care about the details—accessibility, speed, and maintainable systems.</p>
+        <p>Currently open for freelance and full-time opportunities. If you have a project in mind, let's talk.</p>
+      </div>
+    </section>
+
+    <section class="section contact" id="contact">
+      <div>
+        <p class="eyebrow">Contact</p>
+        <h2>Let’s build something</h2>
+        <p>Reach out for collaborations, consulting, or just to say hello.</p>
+      </div>
+      <div class="contact__actions">
+        <a class="btn primary" href="mailto:hello@example.com">Email me</a>
+        <a class="btn ghost" href="https://www.linkedin.com" target="_blank" rel="noreferrer">LinkedIn</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> Riadath. Built with HTML, CSS, and JS.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
