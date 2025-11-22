@@ -284,6 +284,18 @@ main {
   color: var(--muted);
 }
 
+.pub-points {
+  margin: 8px 0 12px 18px;
+  padding: 0;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.pub-authors {
+  font-weight: 600;
+  font-style: normal;
+}
+
 .two-col {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
