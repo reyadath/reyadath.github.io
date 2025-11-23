@@ -284,6 +284,33 @@ main {
   color: var(--muted);
 }
 
+.problem-card {
+  padding: 28px;
+  font-size: 1rem;
+}
+
+.problem-card h3 {
+  margin-top: 0;
+  font-size: 24px;
+}
+
+.problem-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.problem-links a {
+  display: inline-block;
+  border: 2px solid var(--border);
+  padding: 10px 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  background: var(--accent-light);
+}
+
 .pub-points {
   margin: 8px 0 12px 18px;
   padding: 0;
