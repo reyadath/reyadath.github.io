@@ -93,6 +93,8 @@ main {
   position: sticky;
   top: 60px;
   align-self: start;
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
   padding-right: 15px;
   padding-bottom: 40px;
   font-family: 'Lato', sans-serif;
