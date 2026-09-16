@@ -1,28 +1,29 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Riadath | Portfolio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Outfit:wght@300;400&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
   <header class="topbar">
-    <div class="logo">Reyadath Ullah (Akib)</div>
+    <div class="logo">Reyadath</div>
     <nav class="nav" id="nav">
-      <a href="#home">Intro</a>
-      <a href="#research">Research</a>
-      <a href="#experience">Experience</a>
-      <a href="#projects">Projects</a>
+      <a href="#home">Home</a>
+      <a href="#research-interests">Publications</a>
+      <a href="#research-experience">Research Experience</a>
+      <a href="#experience">Industry Experience</a>
       <a href="#embedded">Embedded</a>
+      <a href="#education">Education</a>
       <a href="#skills">Skills</a>
-      <a href="#contact">Contact</a>
     </nav>
     <button class="menu" id="menu" aria-label="Toggle navigation">
       <span></span>
@@ -32,283 +33,255 @@
   </header>
 
   <main>
-    <section class="hero" id="home">
-      <div class="hero__content">
-        <p class="eyebrow">Researcher, Engineer</p>
-        <h2>Reyadath Ullah Akib</h2>
-        <p class="lede">A novice researcher and engineer trying to understand the miracle that is Computers</p>
-        <div class="meta">
-          <span>Email: <a href="mailto:akib152012@gmail.com">akib152012@gmail.com</a></span>
-          <span>Phone: <a href="tel:+8801706360269">+8801706360269</a></span>
-          <span>Dhaka, Bangladesh</span>
+    <div class="sidebar">
+      <section id="home" class="profile-section">
+        <img src="assets/images/image3.jpg" alt="Reyadath Ullah Akib" class="profile-image" decoding="async">
+        <div class="profile-text">
+          <h1>Reyadath Ullah (Akib)</h1>
+          <p>I currently work as an <b>Engineer I</b> at <a href="https://research.samsung.com/srbd"
+              target="_blank">Samsung Research</a> and am a <b>Researcher</b> with the <a href="#experience">Green
+              Networking Research Group</a> at the University of Dhaka.</p>
+          <p>My research so far has focused on applying <b>deep reinforcement learning</b> to optimize resource
+            allocation
+            in <b>federated learning</b> settings with a focus on <b>vehicular edge networks</b>, specifically
+            addressing
+            heterogeneous, non-IID client data. Most
+            recently, I've worked on improving communication efficiency through data-diversity-aware dynamic
+            quantization and <b>semi-synchronous federated learning</b>.</p>
+          <p
+            style="margin-top: 20px; font-weight: bold; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <a href="mailto:reyadath.akib@gmail.com" style="text-decoration: none;"><i class="fas fa-envelope"></i>
+              mail</a>
+            <a href="assets/docs/CV_2027_Reyadath_Ullah_Akib_Academic.pdf" target="_blank"
+              style="text-decoration: none;"><i class="fas fa-file-pdf"></i> CV</a>
+            <a href="https://scholar.google.com/citations?user=j7ziSWcAAAAJ&hl=en" target="_blank"
+              style="text-decoration: none;"><i class="fas fa-graduation-cap"></i> g-scholar</a>
+            <a href="https://www.linkedin.com/in/reyadath-u-053181199/" target="_blank"
+              style="text-decoration: none;"><i class="fab fa-linkedin"></i> LinkedIn</a>
+            <a href="https://github.com/riadath" target="_blank" style="text-decoration: none;"><i
+                class="fab fa-github"></i> Github</a>
+          </p>
         </div>
-        <div class="actions">
-          <a class="btn primary" href="#research">Research</a>
-          <a class="btn ghost" href="#projects">Projects</a>
-        </div>
-      </div>
-      <div class="hero__panel">
-        <div class="panel-top">
-          <figure class="card portrait">
-            <img src="image3.jpg" alt="Portrait of Reyadath Ullah Akib">
-          </figure>
-          <div class="stack-cards">
-            <div class="card stat compact">
-              <p class="label">Role</p>
-              <p class="value">Engineer I, Samsung R&D</p>
-            </div>
-            <div class="card stat compact">
-              <p class="label">Education</p>
-              <p class="value">B.Sc. CSE, University of Dhaka</p>
-              <p class="muted">CGPA: 3.73/4.00 (Top 10%)</p>
-            </div>
+      </section>
+
+      <section id="education">
+        <h2>Education</h2>
+        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+          <img src="assets/images/dhaka_university_logo.png" alt="University of Dhaka Logo"
+            style="width: 100px; height: auto;" loading="lazy" decoding="async">
+          <div>
+            <h3 style="margin: 0;">University of Dhaka</h3>
+            <p style="margin: 5px 0 0 0;">B.Sc. in Computer Science and Engineering</p>
+            <p style="margin: 5px 0 0 0;" class="muted">Jan 2020 – Mar 2025 <br> CGPA: 3.73/4.00 (Top 10%)</p>
           </div>
         </div>
-        <div class="panel-bottom card stat interests">
-          <p class="label">Research Interests</p>
-          <ul>
-            <li>Distributed Learning</li>
-            <li>Machine Learning</li>
-            <li>Embedded Systems</li>
-            <li>Edge Intelligence</li>
-            <li>Mobile Computing</li>
-            <li>High Performance Computing</li>
-          </ul>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="section" id="research">
-      <div class="section__header">
-        <p class="eyebrow">Research & Publications</p>
-        <h2>Current work</h2>
-      </div>
-      <div class="stacked">
-        <article class="card list-item">
-          <h3><a href="https://drive.google.com/file/d/1YoJzEH9Vo9ToUyda9tFP-kyo1quVwQTr/view?usp=sharing" target="_blank" rel="noreferrer">Data-Diversity-Aware Quantization for Semi-Synchronous Federated Deep Reinforcement Learning in Vehicular Edge Computing</a></h3>
-          <p class="muted">Under Review: 1st Revision Submitted at Future Generation Computer Systems · 2026</p>
-          <ul class="pub-points">
-            <li>Developed DQS-FeDRL, a framework integrating data-diversity-aware quantization and Bayesian availability-aware scheduling to optimize communication efficiency and straggler resilience in Vehicular Edge Computing.</li>
-          </ul>
-          <p class="pub-authors">Co-authored with Ittehad Saleh Chowdhury, <strong>Reyadath Ullah</strong>, Md. Abdur Razzaque, Abdulhameed Alelaiwi, Md. Rafiul Hassan, Mohammad Mehedi Hassan.</p>
-        </article>
-        <article class="card list-item">
-          <h3><a href="https://link.springer.com/chapter/10.1007/978-3-031-92608-2_20" target="_blank" rel="noreferrer">Federated Deep Reinforcement Learning for Optimal Resource Allocation in Vehicular Edge Computing</a></h3>
-          <p class="muted">SAI Computing Conference 2025 · London</p>
-          <ul class="pub-points">
-            <li>Introduces DA-FeDRL, a TD3-based scheduler that adapts device selection and bandwidth allocation in VEC.</li>
-            <li>Reward design balances energy, latency, and data diversity; delivers 5% higher accuracy while cutting energy use by 38%.</li>
-          </ul>
-          <p class="pub-authors">Co-authored with Ittehad Chowdhury, Md. Abdur Razzaque, Palash Roy, Mohammad Mehedi Hassan.</p>
-        </article>
-        <article class="card list-item">
-          <h3><a href="https://supplychaininsider.org/ojs/index.php/home/article/view/103" target="_blank" rel="noreferrer">Reducing Complexity in Exporting RMG Products Using AI in Bangladesh</a></h3>
-          <p class="muted">Supply Chain Insider, Vol 12, Issue 01</p>
-          <p>Co-authored with Ahmed Shakibul Islam, Toma Ray, Nusrat Najnen Eva.</p>
-        </article>
-      </div>
-    </section>
+      <section id="skills">
+        <h2>Toolbox & Skills</h2>
+        <ul>
+          <li><strong>Languages:</strong> C/C++, Java, Python, JavaScript, ARM Assembly, Dart</li>
+          <li><strong>Frameworks & Libraries:</strong> Flutter, Flower (FL), PyTorch, React, Spring Boot, JavaFX, SDL
+          </li>
+          <li><strong>Databases:</strong> PostgreSQL, Firebase, MongoDB, SQLite</li>
+          <li><strong>Misc:</strong> Embedded (ARM Cortex-M4), Git, Arduino, Socket Programming (Python)</li>
+        </ul>
+      </section>
+    </div>
 
-    <section class="section" id="experience">
-      <div class="section__header">
-        <p class="eyebrow">Experience</p>
-        <h2>What I’m doing</h2>
-      </div>
-      <div class="stacked">
-        <article class="card list-item highlight">
-          <div class="chip">Present</div>
-          <h3><a href="https://research.samsung.com/srbd" target="_blank" rel="noreferrer">Samsung R&D Institute Bangladesh</a> — Engineer I</h3>
-          <p class="muted">Aug 2025 – Present</p> 
-          <ul>
-            <li>Migration of the <strong>Samsung Tizen Emulator</strong> backend from legacy QEMU 2.3.4 to <strong>QEMU 9.2.4</strong> and redesigned the UI architecture with <strong>SDL2</strong>, replacing Qt to improve cross-platform performance.</li>
-            <li>Developed and published the <strong>Tizen VS Code Extension</strong> on the <a href="https://developer.samsung.com/smarttv/develop/tools/additional-tools/vscode-extension.html" target="_blank" rel="noreferrer">VS Code Marketplace</a>.</li>
-            <li>Researching and drafting patents for distributed, federated-learning-based recommendation systems to drive AI feature recommendations across Samsung devices.</li>
-          </ul>
-        </article>
-        <article class="card list-item">
-          <h3>Green Networking Research Group — University of Dhaka</h3>
-          <p class="muted">Researcher · Sep 2023 – Present</p>
-          <ul>
-            <li>Exploring federated learning and resource allocation in vehicular edge computing.</li>
-            <li>Focusing on energy-aware systems and reliable networking at scale.</li>
-          </ul>
-        </article>
-        <article class="card list-item">
-          <h3><a href="https://www.turing.com" target="_blank" rel="noreferrer">Turing</a> (Remote) — Python Developer (Team Lead)</h3>
-          <p class="muted">Dec 2023 – Dec 2024</p>
-          <ul>
-            <li>Led a team of 6–8 engineers refining data pipelines for training AI models.</li>
-            <li>Automated workflows and deployment using Bash and Python scripts.</li>
-          </ul>
-        </article>
-        <article class="card list-item">
-          <h3><a href="https://codexpro.eu/" target="_blank" rel="noreferrer">CodexPro</a> (Remote) — Python Instructor</h3>
-          <p class="muted">Jan 2023 – Aug 2023</p>
-          <ul>
-            <li>Taught basic to intermediate Python (English batches).</li>
-            <li>Helped design course materials for Python and Scratch.</li>
-          </ul>
-        </article>
-      </div>
-    </section>
+    <div class="content-area">
+      <section id="research-interests">
+        <h2>Research Interests</h2>
+        <p>My research interests include: <b>Federated Learning</b>, <b>Edge Intelligence</b>, <b>Mobile Computing</b>,
+          <b>On Device AI</b>, and <b>IoT</b>.
+        </p>
+      </section>
 
-    <section class="section" id="problem-solving">
-      <div class="section__header">
-        <p class="eyebrow">Problem Solving</p>
-        <h2>Competitive practice</h2>
-      </div>
-      <article class="card problem-card">
-        <h3>900+ problems solved across online judges</h3>
-        <p class="muted">Continuous algorithm drills and contest prep; detailed logs and platform profiles below.</p>
-        <div class="problem-links">
-          <a href="https://github.com/riadath/problem-solves" target="_blank" rel="noreferrer">Git repository</a>
-          <a href="https://codeforces.com/profile/riadath" target="_blank" rel="noreferrer">Codeforces · 571</a>
-          <a href="https://lightoj.com/user/riadath" target="_blank" rel="noreferrer">LightOJ · 109</a>
-          <a href="https://uhunt.onlinejudge.org/id/1056293" target="_blank" rel="noreferrer">UVA · 148</a>
-          <a href="https://www.stopstalk.com/user/profile/riadath" target="_blank" rel="noreferrer">StopStalk · 150+</a>
-        </div>
-      </article>
-    </section>
+      <section id="publications">
+        <h2>Publications</h2>
 
-    <section class="section" id="projects">
-      <div class="section__header">
-        <p class="eyebrow">Selected Projects</p>
-        <h2>Project Portfolio</h2>
-      </div>
-      <div class="grid">
-        <article class="card project">
-          <div class="chip">Platform</div>
-          <h3>CoLab</h3>
-          <p>Collaborative platform for sharing projects and blogs; backend owner with FastAPI.</p>
-          <p class="muted">React · FastAPI · Python · CSS Modules</p>
-          <div class="links">
-            <a href="https://github.com/KrabbyKrabby/CO-LAB" target="_blank" rel="noreferrer">Repo</a>
+        <div style="display: flex; gap: 20px; margin-bottom: 30px; align-items: flex-start;">
+          <img src="assets/images/DQS_Fedrl_Framework.jpg" alt="DQS-FeDRL Framework"
+            style="width: 300px; height: auto; object-fit: contain; flex-shrink: 0; border-radius: 8px; border: 1px solid #eee;"
+            loading="lazy" decoding="async">
+          <div>
+            <h3 style="margin-top: 0;"><a href="assets/docs/DQS_FeDRL_FGCS_Final_Version.pdf"
+                target="_blank">Data-Diversity-Aware Quantization for
+                Semi-Synchronous Federated Deep Reinforcement Learning in Vehicular Edge Computing</a></h3>
+            <p class="muted" style="margin-top: 5px;">Under Review: 1st <b>Major Revision</b> Submitted at <a
+                href="https://www.sciencedirect.com/journal/future-generation-computer-systems" target="_blank">Future
+                Generation Computer
+                Systems</a> · 2026</p>
+            <p style="margin-top: 10px;">Introduces a data-diversity-aware quantization framework (DQS-FeDRL) that
+              dynamically compresses client updates based on their cohort-relative informational novelty, integrated
+              with
+              a Bayesian availability-aware scheduler to distinguish between transient stragglers and permanent
+              dropouts.
+              This approach prevents training stalls, achieving up to 2.9× faster wall-clock convergence and a 75%
+              reduction in communication overhead in dynamic vehicular networks.</p>
+            <p><em>Ittehad Saleh Chowdhury, <strong>Reyadath Ullah</strong>, Md. Abdur Razzaque, Abdulhameed
+                Alelaiwi, Md. Rafiul Hassan, Mohammad Mehedi Hassan.</em></p>
           </div>
-        </article>
-        <article class="card project">
-          <div class="chip">Product</div>
-          <h3>DormBuddy</h3>
-          <p>Hostel finding/listing app for students with separate frontend/backend services.</p>
-          <p class="muted">Python · ReactJS · Spring Boot</p>
-          <div class="links">
-            <a href="https://github.com/KrabbyKrabby/dormbuddy/tree/main/frontend" target="_blank" rel="noreferrer">Frontend</a>
-            <a href="https://github.com/riadath/dormbuddy_backend" target="_blank" rel="noreferrer">Backend</a>
+        </div>
+
+        <div style="display: flex; gap: 20px; margin-bottom: 30px; align-items: flex-start;">
+          <img src="assets/images/DA-FedRL.jpg" alt="DA-FeDRL Framework"
+            style="width: 300px; height: auto; object-fit: contain; flex-shrink: 0; border-radius: 8px; border: 1px solid #eee;"
+            loading="lazy" decoding="async">
+          <div>
+            <h3 style="margin-top: 0;"><a href="https://link.springer.com/chapter/10.1007/978-3-031-92608-2_20"
+                target="_blank">Federated Deep
+                Reinforcement Learning for Optimal Resource
+                Allocation in Vehicular Edge Computing</a></h3>
+            <p class="muted" style="margin-top: 5px;">SAI Computing Conference 2025 · London</p>
+            <p style="margin-top: 5px;"><a href="assets/docs/Published_Conf_Paper.pdf" target="_blank"
+                style="text-decoration: none; font-weight: bold;"><i class="fas fa-file-pdf"></i>PDF</a></p>
+            <p style="margin-top: 10px;">Proposes a Twin Delayed Deep Deterministic Policy Gradient (TD3) based
+              scheduler
+              to optimize device selection and bandwidth allocation. It prioritizes clients with diverse datasets rather
+              than just fast network connections to improve model generalization, demonstrating a 5% improvement in
+              model
+              accuracy alongside a 38% reduction in edge device energy consumption.</p>
+            <p><em><strong>Reyadath Ullah</strong>, Ittehad Chowdhury, Md. Abdur Razzaque, Palash Roy, Mohammad Mehedi
+                Hassan.</em></p>
           </div>
-        </article>
-        <article class="card project">
-          <div class="chip">Mobile</div>
-          <h3>CSEDU App</h3>
-          <p>Android app for the CSE department; built with Flutter and Firebase.</p>
-          <p class="muted">Dart · Flutter · Firebase</p>
-          <div class="links">
-            <a href="https://github.com/riadath/csedu" target="_blank" rel="noreferrer">Repo</a>
+        </div>
+
+        <h3><a href="https://supplychaininsider.org/ojs/index.php/home/article/view/103" target="_blank">Reducing
+            Complexity in Exporting RMG Products Using AI in Bangladesh</a></h3>
+        <p class="muted">Supply Chain Insider, Vol 12, Issue 01</p>
+        <p><em><strong>Reyadath Ullah</strong>, Ahmed Shakibul Islam, Toma Ray, Nusrat Najnen Eva.</em></p>
+      </section>
+
+      <section id="research-experience">
+        <h2>Research Experience</h2>
+
+        <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+          <img src="assets/images/wm_logo.jpg" alt="William & Mary Logo"
+            style="width: 100px; height: 100px; object-fit: contain; margin-top: 5px;" loading="lazy" decoding="async">
+          <div>
+            <h3 style="margin: 0;"><a href="https://www.wm.edu/" target="_blank">William & Mary - IMLS CiteCast
+                Project</a>
+            </h3>
+            <p style="margin: 5px 0 10px 0;" class="muted">Remote Research Collaborator · Sep 2026 – Present</p>
+            <ul style="margin: 0;">
+              <li>Collaborating on an IMLS-funded project to identify and preserve web resources referenced in archived
+                US television news, alongside Old Dominion University and the Internet Archive.</li>
+              <li>Developing multi-modal machine learning and deep learning models for web citation detection under the
+                supervision of <a href="https://alexandernwala.com/" target="_blank">Dr. Alexander C. Nwala</a> and <a
+                  href="https://cdsp.wm.edu/computerscience/people/zhang-yanfu.php" target="_blank">Dr. Yanfu Zhang</a>.
+              </li>
+            </ul>
           </div>
-        </article>
-        <article class="card project">
-          <div class="chip">Games</div>
-          <h3>Project Z</h3>
-          <p>Retro 2D games inside an open-world RPG; SDL and C/C++.</p>
-          <p class="muted">C/C++ · SDL</p>
-          <div class="links">
-            <a href="https://github.com/riadath/ProjectZ" target="_blank" rel="noreferrer">Repo</a>
+        </div>
+
+        <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+          <img src="assets/images/dhaka_university_logo.png" alt="University of Dhaka Logo"
+            style="width: 100px; height: 100px; object-fit: contain; margin-top: 5px;">
+          <div>
+            <h3 style="margin: 0;">Green Networking Research Group — University of Dhaka</h3>
+            <p style="margin: 5px 0 10px 0;" class="muted">Researcher · Sep 2023 – Present</p>
+            <ul style="margin: 0;">
+              <li>Exploring federated learning and resource allocation in vehicular edge computing.</li>
+              <li>Focusing on energy-aware systems and reliable networking at scale.</li>
+            </ul>
           </div>
-        </article>
-      </div>
-    </section>
+        </div>
+      </section>
 
-    <section class="section" id="embedded">
-      <div class="section__header">
-        <p class="eyebrow">Embedded Programming</p>
-        <h2>Embedded Projects</h2>
-      </div>
-      <div class="stacked">
-        <article class="card list-item">
-          <h3>Device Drivers for STM32F4xx</h3>
-          <p class="muted">I2C, SPI, UART drivers from scratch (no external libs).</p>
-          <div class="links">
-            <a href="https://github.com/riadath/traffic_system_i2c" target="_blank" rel="noreferrer">I2C</a>
-            <a href="https://github.com/riadath/traffic_system_spi" target="_blank" rel="noreferrer">SPI</a>
-            <a href="https://github.com/riadath/traffic_system_usart" target="_blank" rel="noreferrer">UART/USART</a>
+      <section id="experience">
+        <h2>Experience</h2>
+
+        <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+          <img src="assets/images/samsung_research_logo.png" alt="Samsung Research Logo"
+            style="width: 100px; height: 100px; object-fit: contain; margin-top: 5px;" loading="lazy" decoding="async">
+          <div>
+            <h3 style="margin: 0;"><a href="https://research.samsung.com/srbd" target="_blank">Samsung Research</a> —
+              Engineer I</h3>
+            <p style="margin: 5px 0 10px 0;" class="muted">Aug 2025 – Present</p>
+            <ul style="margin: 0;">
+              <li>Migrated the <strong>Samsung Tizen Emulator</strong> backend from legacy QEMU 2.3.4 to <strong>QEMU
+                  9.2.4</strong> and redesigned the UI architecture with <strong>SDL2</strong>, replacing Qt to improve
+                cross-platform performance.</li>
+              <li>Developed <strong><a href="https://github.com/Samsung/tizen-agent-skills" target="_blank">Tizen Agent
+                    Skills</a></strong>, an open-source Node.js/TypeScript toolkit enabling AI coding assistants
+                (Claude,
+                Gemini, Cline) to automate Tizen SDK workflows via natural language, including app deployment, GDB/CDP
+                remote debugging, and Playwright testing.</li>
+              <li>Developed and published the <strong>Tizen VS Code Extension</strong> on the <a
+                  href="https://developer.samsung.com/smarttv/develop/tools/additional-tools/vscode-extension.html"
+                  target="_blank">VS Code Marketplace</a>.</li>
+              <li>Researching and drafting patents for distributed, federated-learning-based recommendation systems to
+                drive AI feature recommendations across Samsung devices.</li>
+            </ul>
           </div>
-          <p class="muted">C/C++ · Register-level programming · Keil MDK</p>
-        </article>
-        <article class="card list-item">
-          <h3><a href="https://github.com/riadath/DUOS_modified" target="_blank" rel="noreferrer">DUOS (RTOS) for ARM Cortex-M4</a></h3>
-          <p class="muted">Real-time OS for ARM Cortex-M4 microcontrollers.</p>
-          <p class="muted">C/C++ · ARM Assembly · CMake · Register-level programming</p>
-        </article>
-      </div>
-    </section>
+        </div>
 
-    <section class="section two-col" id="skills">
-      <div>
-        <p class="eyebrow">Skills</p>
-        <h2>Toolbox</h2>
-      </div>
-      <div class="stacked tight skills-list">
-        <div class="card list-item">
-          <h3>Languages</h3>
-          <p class="muted">C/C++, Java, Python, JavaScript, ARM Assembly, Dart</p>
+        <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+          <img src="assets/images/turing_logo.jpg" alt="Turing Logo"
+            style="width: 100px; height: 100px; object-fit: contain; margin-top: 0px;" loading="lazy" decoding="async">
+          <div>
+            <h3 style="margin: 0;"><a href="https://www.turing.com" target="_blank">Turing</a> (Remote) — Python
+              Developer
+              (Team Lead)</h3>
+            <p style="margin: 5px 0 10px 0;" class="muted">Dec 2023 – Dec 2024</p>
+            <ul style="margin: 0;">
+              <li>Led a team of 6–8 engineers refining data pipelines for training AI models.</li>
+              <li>Automated workflows and deployment using Bash and Python scripts.</li>
+            </ul>
+          </div>
         </div>
-        <div class="card list-item">
-          <h3>Frameworks & Libraries</h3>
-          <p class="muted">Flutter, Flower (FL), PyTorch, React, Spring Boot, JavaFX, SDL</p>
-        </div> 
-        <div class="card list-item">
-          <h3>Databases</h3>
-          <p class="muted">PostgreSQL, Firebase, MongoDB, SQLite</p>
-        </div>
-        <div class="card list-item">
-          <h3>Misc</h3>
-          <p class="muted">Embedded (ARM Cortex-M4), Git, Arduino, Socket Programming (Python)</p>
-        </div>
-      </div>
-    </section>
 
-    <section class="section two-col" id="education">
-      <div>
-        <p class="eyebrow">Education</p>
-        <h2>University of Dhaka</h2>
-      </div>
-      <div class="card list-item">
-        <p class="muted">B.Sc. in Computer Science and Engineering · Jan 2020 – Mar 2025</p>
-        <p>CGPA: 3.73/4.00 (Top 10%)</p>
-      </div>
-    </section>
+        <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+          <img src="assets/images/codex_pro_logo.jpg" alt="CodexPro Logo"
+            style="width: 100px; height: 100px; object-fit: contain; margin-top: 0px;" loading="lazy" decoding="async">
+          <div>
+            <h3 style="margin: 0;"><a href="https://codexpro.eu/" target="_blank">CodexPro</a> (Remote) — Python
+              Instructor</h3>
+            <p style="margin: 5px 0 10px 0;" class="muted">Jan 2023 – Aug 2023</p>
+            <ul style="margin: 0;">
+              <li>Taught basic to intermediate Python (English batches).</li>
+              <li>Helped design course materials for Python and Scratch.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
 
-    <section class="section" id="competitions">
-      <div class="section__header">
-        <p class="eyebrow">Competitive Programming & CTF</p>
-        <h2>Highlights</h2>
-      </div>
-      <div class="stacked">
-        <div class="card list-item">
-          <p class="muted">ICPC Asia Dhaka Regional 2024 · 54th place (Top 17%)</p>
-        </div>
-        <div class="card list-item">
-          <p class="muted">DU CTF 2023 · 2nd Runner Up</p>
-        </div>
-        <div class="card list-item">
-          <p class="muted">EWU National Robofest CTF 2024 · 7th Final, 6th Preliminary</p>
-        </div>
-        <div class="card list-item">
-          <p class="muted">BUET CTF 2024 · 12th Final, 3rd Preliminary</p>
-        </div>
-      </div>
-    </section>
 
-    <section class="section contact" id="contact">
-      <div>
-        <p class="eyebrow">Contact</p>
-        <h2>Let’s talk</h2>
-        <p>Reach out directly through any of these channels.</p>
-      </div>
-      <div class="contact__info">
-        <p>Email: <a href="mailto:akib152012@gmail.com">akib152012@gmail.com</a></p>
-        <p>LinkedIn: <a href="https://www.linkedin.com/in/reyadath-u-053181199/" target="_blank" rel="noreferrer">LinkedIn Profile</a></p>
-        <p>Phone: <a href="tel:+8801706360269">+8801706360269</a></p>
-      </div>
-    </section>
+
+      <section id="embedded">
+        <h2>Embedded Programming</h2>
+
+        <div style="display: flex; gap: 20px; margin-bottom: 30px; align-items: flex-start;">
+          <div>
+            <h3 style="margin-top: 0;">Device Drivers for STM32F4xx Microcontrollers</h3>
+            <ul style="margin-top: 10px;">
+              <li>Developed bare-metal device drivers for STM32F4xx microcontrollers (ARM Cortex-M4) from scratch using
+                C/C++
+                and register-level programming.</li>
+              <li><strong><a href="https://github.com/riadath/traffic_system_i2c" target="_blank">I2C</a>:</strong>
+                Supports
+                master/slave modes, address handling, and event/error interrupts.</li>
+              <li><strong><a href="https://github.com/riadath/traffic_system_spi" target="_blank">SPI</a>:</strong>
+                Features
+                flexible baud rates, data format settings, and interrupt-based communication for slave mode.</li>
+              <li><strong><a href="https://github.com/riadath/traffic_system_usart" target="_blank">UART</a>:</strong>
+                Provides robust configuration and communication functions for UART2, UART4, and UART5.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3><a href="https://github.com/riadath/DUOS_modified" target="_blank">DUOS (RTOS) for ARM Cortex-M4</a></h3>
+        <p class="muted"><em>C/C++ · ARM Assembly · CMake · Register-level programming</em></p>
+        <ul style="margin-top: 10px;">
+          <li>Contributed to the Dhaka University Operating System (DUOS), an educational real-time operating system
+            targeting ARMv7-M architectures (specifically STM32F4xx).</li>
+          <li>Developed core RTOS capabilities including task management, context switching, and hardware interaction.
+          </li>
+        </ul>
+      </section>
+
+    </div>
   </main>
 
   <footer class="footer">
@@ -317,4 +290,5 @@
 
   <script src="script.js"></script>
 </body>
+
 </html>
