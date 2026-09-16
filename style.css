@@ -219,28 +219,10 @@ li {
 
 /* ── Social Links ── */
 .profile-text p a {
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: color 0.2s ease;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-}
-
-.profile-text p a:hover {
-  transform: translateY(-1px);
-}
-
-/* ── Card Hover (experience / research entries) ── */
-.content-area > section > div[style*="display: flex"] {
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  border-radius: 8px;
-  padding: 16px;
-  margin-left: -16px;
-  margin-right: -16px;
-}
-
-.content-area > section > div[style*="display: flex"]:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 /* ── Section Reveal Animation ── */
@@ -416,17 +398,6 @@ li {
     display: flex;
   }
 
-  /* Card hover: disable on touch, tighten padding */
-  .content-area > section > div[style*="display: flex"] {
-    margin-left: 0;
-    margin-right: 0;
-    padding: 12px 8px;
-  }
-
-  .content-area > section > div[style*="display: flex"]:hover {
-    transform: none;
-    box-shadow: none;
-  }
 
   /* Education logo on mobile */
   .sidebar > section > div[style*="display: flex"] img {
