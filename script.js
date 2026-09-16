@@ -30,3 +30,25 @@ document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     section.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 });
+
+// Section reveal on scroll (lightweight IntersectionObserver)
+const revealSections = document.querySelectorAll(".content-area > section");
+
+if ("IntersectionObserver" in window && revealSections.length > 0) {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("revealed");
+          observer.unobserve(entry.target); // fire once, then stop watching
+        }
+      });
+    },
+    { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
+  );
+
+  revealSections.forEach((section) => observer.observe(section));
+} else {
+  // Fallback: show everything immediately
+  revealSections.forEach((section) => section.classList.add("revealed"));
+}

@@ -24,12 +24,14 @@ body {
 a {
   color: var(--accent);
   text-decoration: underline;
+  transition: color 0.2s ease;
 }
 
 a:hover {
   color: var(--ink);
 }
 
+/* ── Topbar ── */
 .topbar {
   position: sticky;
   top: 0;
@@ -40,6 +42,7 @@ a:hover {
   align-items: center;
   justify-content: space-between;
   padding: 10px 20px;
+  will-change: transform;
 }
 
 .logo {
@@ -58,10 +61,27 @@ a:hover {
   text-decoration: none;
   color: var(--ink);
   font-size: 14px;
+  position: relative;
+  padding-bottom: 2px;
+}
+
+.nav a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--ink);
+  transition: width 0.25s ease;
+}
+
+.nav a:hover::after {
+  width: 100%;
 }
 
 .nav a:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .menu {
@@ -80,6 +100,7 @@ a:hover {
   background: var(--ink);
 }
 
+/* ── Layout ── */
 main {
   max-width: var(--max-width);
   margin: 0 auto;
@@ -117,6 +138,7 @@ main {
   background: var(--muted);
 }
 
+/* ── Typography ── */
 h1, h2, h3, h4 {
   font-family: 'Lato', sans-serif;
   margin-top: 1.5em;
@@ -152,6 +174,7 @@ li {
   margin-bottom: 5px;
 }
 
+/* ── Profile ── */
 .profile-section {
   display: flex;
   flex-direction: column;
@@ -184,6 +207,7 @@ li {
   font-size: 0.9em;
 }
 
+/* ── Footer ── */
 .footer {
   margin-top: 60px;
   padding: 20px;
@@ -193,10 +217,90 @@ li {
   font-size: 0.9em;
 }
 
+/* ── Social Links ── */
+.profile-text p a {
+  transition: color 0.2s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.profile-text p a:hover {
+  transform: translateY(-1px);
+}
+
+/* ── Card Hover (experience / research entries) ── */
+.content-area > section > div[style*="display: flex"] {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border-radius: 8px;
+  padding: 16px;
+  margin-left: -16px;
+  margin-right: -16px;
+}
+
+.content-area > section > div[style*="display: flex"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Section Reveal Animation ── */
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sections start hidden, revealed by JS */
+.content-area > section {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.content-area > section.revealed {
+  animation: revealUp 0.5s ease forwards;
+}
+
+/* Profile loads immediately with a gentle fade */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sidebar {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+/* Stagger child items within a revealed section */
+.content-area > section.revealed > div[style*="display: flex"],
+.content-area > section.revealed > h3,
+.content-area > section.revealed > p {
+  animation: revealUp 0.4s ease backwards;
+}
+
+.content-area > section.revealed > :nth-child(2) { animation-delay: 0.05s; }
+.content-area > section.revealed > :nth-child(3) { animation-delay: 0.1s; }
+.content-area > section.revealed > :nth-child(4) { animation-delay: 0.15s; }
+.content-area > section.revealed > :nth-child(5) { animation-delay: 0.2s; }
+.content-area > section.revealed > :nth-child(6) { animation-delay: 0.25s; }
+
+/* ── Performance: off-screen content ── */
+.content-area > section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
+}
+
+/* ── Responsive ── */
 @media (max-width: 900px) {
   main {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 30px;
+    padding: 20px 16px 60px;
+    overflow-x: hidden;
   }
   
   .sidebar {
@@ -205,27 +309,103 @@ li {
     overflow-y: visible;
   }
 
+  /* Center profile on mobile */
+  .profile-section {
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-image {
+    max-width: 160px;
+    width: 160px;
+  }
+
+  .profile-text h1 {
+    font-size: 1.5em;
+  }
+
+  /* Center social links */
+  .profile-text p[style*="flex"] {
+    justify-content: center !important;
+  }
+
+  /* Stack flex containers vertically */
   .sidebar > section > div,
   .content-area > section > div {
     flex-direction: column !important;
     align-items: flex-start !important;
   }
 
+  /* Prevent any image overflow */
   img {
     max-width: 100% !important;
     height: auto !important;
   }
 
+  /* Publication images: stack above text, full width */
+  .content-area > section > div[style*="display: flex"] img {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex-shrink: 1 !important;
+  }
+
+  /* Experience/research logos: keep small */
+  .content-area > section > div[style*="display: flex"] img[style*="width: 100px"] {
+    width: 60px !important;
+    height: 60px !important;
+  }
+
+  /* Tighten typography */
+  h2 {
+    font-size: 1.3em;
+    margin-top: 1em;
+  }
+
+  h3 {
+    font-size: 1.05em;
+  }
+
+  body {
+    font-size: 15px;
+    line-height: 1.5;
+    overflow-x: hidden;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  /* Prevent text overflow in all containers */
+  .content-area,
+  .sidebar,
+  .content-area > section,
+  .content-area > section > div {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Better touch targets for links */
+  a {
+    -webkit-tap-highlight-color: rgba(0, 0, 238, 0.1);
+  }
+
   .nav {
     position: absolute;
     top: 50px;
-    right: 20px;
+    right: 16px;
     background: var(--bg);
     border: 1px solid var(--border);
     padding: 10px;
     flex-direction: column;
     display: none;
     min-width: 150px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+  }
+
+  .nav a {
+    padding: 8px 12px;
+    font-size: 15px;
   }
 
   .nav.open {
@@ -234,5 +414,71 @@ li {
 
   .menu {
     display: flex;
+  }
+
+  /* Card hover: disable on touch, tighten padding */
+  .content-area > section > div[style*="display: flex"] {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 12px 8px;
+  }
+
+  .content-area > section > div[style*="display: flex"]:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Education logo on mobile */
+  .sidebar > section > div[style*="display: flex"] img {
+    width: 70px !important;
+  }
+
+  /* Footer spacing */
+  .footer {
+    margin-top: 40px;
+    padding: 16px;
+    font-size: 0.85em;
+  }
+}
+
+/* Small phones */
+@media (max-width: 400px) {
+  main {
+    padding: 16px 12px 50px;
+  }
+
+  .profile-image {
+    max-width: 130px;
+  }
+
+  .profile-text h1 {
+    font-size: 1.3em;
+  }
+
+  h2 {
+    font-size: 1.2em;
+  }
+}
+
+/* Safe area for notched phones */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .footer {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .content-area > section {
+    opacity: 1;
+    transform: none;
   }
 }
