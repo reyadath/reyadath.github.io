@@ -52,3 +52,29 @@ if ("IntersectionObserver" in window && revealSections.length > 0) {
   // Fallback: show everything immediately
   revealSections.forEach((section) => section.classList.add("revealed"));
 }
+
+// Lightbox logic
+const lightbox = document.getElementById('lightbox');
+if (lightbox) {
+  const lightboxImg = document.getElementById('lightbox-img');
+  const lightboxCaption = document.getElementById('lightbox-caption');
+  const closeLightbox = document.querySelector('.lightbox-close');
+
+  document.querySelectorAll('.pub-image').forEach(img => {
+    img.addEventListener('click', function() {
+      lightbox.style.display = "flex";
+      lightboxImg.src = this.src;
+      lightboxCaption.innerHTML = this.alt;
+    });
+  });
+
+  closeLightbox.addEventListener('click', () => {
+    lightbox.style.display = "none";
+  });
+
+  lightbox.addEventListener('click', (e) => {
+    if(e.target !== lightboxImg) {
+      lightbox.style.display = "none";
+    }
+  });
+}

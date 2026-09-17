@@ -325,6 +325,11 @@ li {
   }
 
   /* Publication images: stack above text, full width */
+  .pub-image-container {
+    width: 100%;
+    max-width: 100%;
+  }
+
   .content-area > section > div[style*="display: flex"] img {
     width: 100% !important;
     max-width: 100% !important;
@@ -452,4 +457,108 @@ li {
     opacity: 1;
     transform: none;
   }
+}
+
+/* ── Publications Image Interaction ── */
+.pub-image-container {
+  position: relative;
+  flex-shrink: 0;
+  width: 300px;
+}
+
+.pub-image {
+  display: block;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: zoom-in;
+}
+
+.pub-image:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.pub-image-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  white-space: nowrap;
+  font-family: 'Lato', sans-serif;
+  z-index: 5;
+}
+
+.pub-image:hover + .pub-image-hint {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-5px);
+}
+
+/* ── Lightbox ── */
+.lightbox {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.85);
+  backdrop-filter: blur(5px);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.lightbox-content {
+  margin: auto;
+  display: block;
+  max-width: 90%;
+  max-height: 80vh;
+  border-radius: 8px;
+  animation: zoomIn 0.3s ease;
+  object-fit: contain;
+}
+
+@keyframes zoomIn {
+  from {transform: scale(0.9); opacity: 0;}
+  to {transform: scale(1); opacity: 1;}
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  color: #fff;
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.2s;
+  z-index: 1001;
+}
+
+.lightbox-close:hover,
+.lightbox-close:focus {
+  color: #ccc;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+#lightbox-caption {
+  margin: 15px auto 0;
+  display: block;
+  width: 80%;
+  max-width: 700px;
+  text-align: center;
+  color: #eee;
+  font-family: 'Lato', sans-serif;
+  font-size: 1.1em;
+  animation: zoomIn 0.3s ease;
 }
