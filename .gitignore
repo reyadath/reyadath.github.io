@@ -1,2 +1,14 @@
 .DS_Store
 *.DS_Store
+.wolf/
+.claude/
+CLAUDE.md
+GEMINI.md
+.gemini/
+AGENTS.md
+.cursor/
+.cursorrules
+.windsurfrules
+.github/copilot-instructions.md
+.aider*
+.codex/
