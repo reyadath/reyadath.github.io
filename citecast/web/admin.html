@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CiteCast Admin</title>
+<!-- start downloading the Firebase SDK (same version as store.firebase.js) while the page loads -->
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="authView" class="view center" hidden></div>
+
+<div id="adminView" class="view" hidden>
+  <header>
+    <div class="bar">
+      <div class="brand">CiteCast <span>admin</span></div>
+      <span class="spacer"></span>
+      <span class="who" id="whoName"></span>
+      <a class="btn ghost" href="index.html">Annotator view</a>
+      <button class="btn ghost signout">Sign out</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <nav class="tabs">
+      <button data-tab="progress">Progress</button>
+      <button data-tab="assign">Assignments</button>
+      <button data-tab="accounts">Accounts</button>
+    </nav>
+
+    <!-- progress and export -->
+    <section id="tab-progress" class="tab">
+      <div class="toolrow">
+        <label class="fld">Annotator <select id="fAnn"></select></label>
+        <label class="fld">Status
+          <select id="fStatus">
+            <option value="">All</option><option value="assigned">Not uploaded</option>
+            <option value="draft">Draft uploaded</option><option value="final">Submitted</option>
+          </select>
+        </label>
+        <span class="spacer"></span>
+        <button class="btn ghost" id="refresh" title="Load the latest uploads and assignments">Refresh</button>
+        <button class="btn" id="exportAll" title="Every uploaded episode, drafts included, in one CSV">Export all uploads</button>
+        <button class="btn primary" id="exportFinal" title="Submitted episodes only, in one CSV">Export submitted</button>
+      </div>
+      <p class="lead" id="progSummary"></p>
+      <div class="tablewrap tall"><table id="progTable"></table></div>
+    </section>
+
+    <!-- who annotates which episode -->
+    <section id="tab-assign" class="tab" hidden>
+      <p class="lead">Tick a box to assign an episode to an annotator. Unticking keeps anything they uploaded; it comes back if you assign the episode again.</p>
+      <div class="tablewrap tall"><table class="matrix" id="matrix"></table></div>
+      <div class="legend">
+        <span><i></i>Assigned, nothing uploaded</span>
+        <span><i style="background:var(--accent-soft)"></i>Draft uploaded</span>
+        <span><i style="background:rgba(46,122,76,.12)"></i>Submitted</span>
+      </div>
+    </section>
+
+    <!-- accounts -->
+    <section id="tab-accounts" class="tab" hidden>
+      <div class="tablewrap tall"><table id="accTable"></table></div>
+      <h2 style="margin:28px 0 12px;font-size:16px;font-weight:600">Add an annotator</h2>
+      <p class="lead" id="addAccHint"></p>
+      <form class="toolrow" id="newAcc">
+        <label class="fld">Name <input id="naName" required></label>
+        <label class="fld">ID <input id="naUser" autocapitalize="none" spellcheck="false" required></label>
+        <label class="fld">Temporary password <input id="naPass"></label>
+        <label class="fld" id="naUidWrap" hidden>Firebase UID (from Authentication &gt; Users) <input id="naUid" spellcheck="false"></label>
+        <button class="btn" type="button" id="naGen">New password</button>
+        <button class="btn primary" type="submit">Add annotator</button>
+      </form>
+      <div class="creds" id="creds"></div>
+      <p class="fine" id="mockFoot" style="margin-top:28px"></p>
+    </section>
+  </div>
+</div>
+
+<div id="toasts"></div>
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script src="store.js"></script>
+<script src="store.firebase.js"></script>
+<script>
+let ME = null;
+let DATA = { annotators: [], assignments: [] };
+const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem("citecast_admin_" + k); localStorage.setItem("citecast_admin_" + k, v); } catch (e) { return null; } };
+const userById = uid => DATA.annotators.find(a => a.uid === uid);
+const annotatorsOnly = () => DATA.annotators.filter(a => a.role === "annotator").sort((a, b) => a.name.localeCompare(b.name));
+const epLabel = id => { const [, prog, date] = episodeInfo(id); return `${network(id)} · ${date} · ${prog}`; };
+const STATUS = { assigned: ["Not uploaded", ""], draft: ["Draft uploaded", "draft"], final: ["Submitted", "final"] };
+// upload fields come from annotators: show them only as plain numbers
+const n0 = v => Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0;
+// Each exported row is labelled from its upload record (whose owner, name and episode the rules check),
+// never from the row's own fields, which the annotator's browser wrote.
+const rowsOf = s => (s.rows || []).map(r => ({ ...r, annotator: s.annotator, episode_id: s.episode_id }));
+const stamp = () => new Date().toISOString().slice(0, 10).replace(/-/g, "");
+
+// random temporary password without look-alike characters
+function genPassword() {
+  const abc = "abcdefghjkmnpqrstuvwxyz23456789", out = new Uint32Array(10);
+  crypto.getRandomValues(out);
+  return Array.from(out, n => abc[n % abc.length]).join("");
+}
+
+// ---- tabs ----
+function tab(name) {
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+  document.querySelectorAll(".tab").forEach(s => s.hidden = s.id !== "tab-" + name);
+  pref("tab", name);
+}
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => tab(b.dataset.tab));
+
+async function reload() {
+  try { DATA = await Store.adminOverview(); } catch (e) { return msg(e.message); }
+  renderProgress(); renderMatrix(); renderAccounts();
+}
+$("refresh").onclick = async () => { $("refresh").disabled = true; await reload(); $("refresh").disabled = false; msg("Up to date.", true); };
+
+// ---- progress ----
+function renderProgress() {
+  const keep = $("fAnn").value;
+  $("fAnn").innerHTML = `<option value="">All</option>` + annotatorsOnly().map(a => `<option value="${a.uid}">${esc(a.name)}</option>`).join("");
+  $("fAnn").value = keep;
+  const order = id => EPISODES.findIndex(x => x[0] === id);
+  const list = DATA.assignments
+    .filter(a => (!$("fAnn").value || a.uid === $("fAnn").value) && (!$("fStatus").value || a.status === $("fStatus").value))
+    .sort((a, b) => (userById(a.uid)?.name || "").localeCompare(userById(b.uid)?.name || "") || order(a.episode_id) - order(b.episode_id));
+  const all = DATA.assignments, c = s => all.filter(a => a.status === s).length;
+  $("progSummary").textContent = `${all.length} assigned episodes: ${c("final")} submitted, ${c("draft")} with a draft, ${c("assigned")} with nothing uploaded.`;
+  const head = `<thead><tr><th>Annotator</th><th>Episode</th><th>Status</th><th>Rows</th><th>Minutes with rows</th><th>Last upload</th><th></th></tr></thead>`;
+  const body = list.length ? list.map(a => {
+    const u = userById(a.uid), n = minuteCount(a.episode_id), [label, cls] = STATUS[a.status] || STATUS.assigned;
+    const rc = n0(a.row_count), md = Math.min(n0(a.minutes_done), n);
+    const acts = [a.status !== "assigned" ? `<button class="linkbtn" data-csv="${a.uid}|${a.episode_id}">CSV</button>` : "",
+                  a.status === "final" ? `<button class="linkbtn" data-reopen="${a.uid}|${a.episode_id}">Reopen</button>` : ""].join("");
+    return `<tr><td>${esc(u?.name || a.uid)}</td><td>${esc(epLabel(a.episode_id))}</td>
+      <td><span class="st ${cls}">${label}</span></td>
+      <td class="num">${a.status === "assigned" ? "" : rc}</td>
+      <td class="num">${a.status === "assigned" ? "" : `<span class="meter"><i style="width:${md / n * 100}%"></i></span>${md}/${n}`}</td>
+      <td class="num">${fmtTime(a.submitted_at || a.uploaded_at)}</td><td><div class="acts">${acts}</div></td></tr>`;
+  }).join("") : `<tr><td colspan="7"><div class="empty">Nothing matches these filters.</div></td></tr>`;
+  $("progTable").innerHTML = head + `<tbody>${body}</tbody>`;
+  $("progTable").querySelectorAll("[data-csv]").forEach(b => b.onclick = () => exportOne(...b.dataset.csv.split("|")));
+  $("progTable").querySelectorAll("[data-reopen]").forEach(b => b.onclick = () => reopen(...b.dataset.reopen.split("|")));
+}
+$("fAnn").onchange = $("fStatus").onchange = renderProgress;
+
+async function exportOne(uid, episodeId) {
+  try {
+    const [s] = await Store.adminSubmissions({ uid, episodeId });
+    if (!s) return msg("Nothing uploaded for this episode.");
+    downloadText(`citecast_${s.username}_${episodeId}_${s.status}.csv`, toCsv(sortRows(rowsOf(s))));
+  } catch (e) { msg(e.message); }
+}
+async function exportMany(finalOnly) {
+  try {
+    const subs = await Store.adminSubmissions({ finalOnly });
+    if (!subs.length) return msg(finalOnly ? "No episode has been submitted yet." : "Nothing has been uploaded yet.");
+    const rows = sortRows(subs.flatMap(rowsOf));
+    downloadText(`citecast_${finalOnly ? "submitted" : "all_uploads"}_${stamp()}.csv`, toCsv(rows));
+    msg(`Exported ${rows.length} rows from ${subs.length} episode uploads.`, true);
+  } catch (e) { msg(e.message); }
+}
+$("exportFinal").onclick = () => exportMany(true);
+$("exportAll").onclick = () => exportMany(false);
+
+async function reopen(uid, episodeId) {
+  if (!confirm(`Reopen ${userById(uid)?.name}'s submission for ${epLabel(episodeId)}? They can then edit and submit it again.`)) return;
+  try { await Store.adminReopen(uid, episodeId); msg("Reopened.", true); reload(); } catch (e) { msg(e.message); }
+}
+
+// ---- assignments ----
+function renderMatrix() {
+  const anns = annotatorsOnly().filter(a => a.active);
+  const by = {}; DATA.assignments.forEach(a => by[a.uid + "|" + a.episode_id] = a);
+  const head = `<thead><tr><th>Episode</th>${anns.map(a => `<th>${esc(a.name)}<div class="sub">${DATA.assignments.filter(x => x.uid === a.uid).length} episodes</div></th>`).join("")}</tr></thead>`;
+  const body = EPISODES.map(([id]) => `<tr><td>${esc(epLabel(id))}</td>${anns.map(a => {
+    const x = by[a.uid + "|" + id];
+    return `<td class="${x && x.status !== "assigned" ? "s-" + x.status : ""}"><input type="checkbox" data-a="${a.uid}|${id}" ${x ? "checked" : ""}
+      title="${esc(a.name)}: ${x ? STATUS[x.status][0] : "not assigned"}"></td>`;
+  }).join("")}</tr>`).join("");
+  $("matrix").innerHTML = anns.length ? head + `<tbody>${body}</tbody>` : `<tbody><tr><td><div class="empty">Add an annotator first.</div></td></tr></tbody>`;
+  $("matrix").querySelectorAll("input[data-a]").forEach(box => box.onchange = async () => {
+    const [uid, ep] = box.dataset.a.split("|"), x = by[uid + "|" + ep];
+    if (!box.checked && x && x.status !== "assigned" &&
+        !confirm(`${userById(uid).name} has uploaded work for this episode. Unassign anyway? The upload is kept.`)) { box.checked = true; return; }
+    box.disabled = true;
+    // update the local copy instead of reloading everything after each click
+    try {
+      if (box.checked) {
+        const a = await Store.adminAssign(uid, ep);
+        DATA.assignments = DATA.assignments.filter(x => !(x.uid === uid && x.episode_id === ep)).concat(a);
+      }
+      else { await Store.adminUnassign(uid, ep); DATA.assignments = DATA.assignments.filter(a => !(a.uid === uid && a.episode_id === ep)); }
+    } catch (e) { msg(e.message); }
+    renderProgress(); renderMatrix(); renderAccounts();
+  });
+}
+
+// ---- accounts ----
+function renderAccounts() {
+  const list = DATA.annotators.slice().sort((a, b) => (a.role === "admin" ? 0 : 1) - (b.role === "admin" ? 0 : 1) || a.name.localeCompare(b.name));
+  $("accTable").innerHTML = `<thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Assigned</th><th></th></tr></thead><tbody>` +
+    list.map(a => `<tr><td>${esc(a.name)}</td><td>${esc(a.username)}</td><td>${a.role}</td>
+      <td>${a.active ? (a.must_change_password ? "Temporary password" : "Active") : `<span class="st">Deactivated</span>`}</td>
+      <td class="num">${DATA.assignments.filter(x => x.uid === a.uid).length}</td>
+      <td><div class="acts">${a.uid === ME.uid ? "" :
+        `${Store.can.resetPassword ? `<button class="linkbtn" data-reset="${a.uid}">Reset password</button>` : ""}
+         <button class="linkbtn${a.active ? " del" : ""}" data-active="${a.uid}">${a.active ? "Deactivate" : "Activate"}</button>`}</div></td></tr>`).join("") + "</tbody>";
+  $("accTable").querySelectorAll("[data-reset]").forEach(b => b.onclick = async () => {
+    const u = userById(b.dataset.reset), pw = prompt(`New temporary password for ${u.name}:`, genPassword());
+    if (!pw) return;
+    try { await Store.adminResetPassword(u.uid, pw); showCreds(u.username, pw); reload(); } catch (e) { msg(e.message); }
+  });
+  $("accTable").querySelectorAll("[data-active]").forEach(b => b.onclick = async () => {
+    const u = userById(b.dataset.active);
+    if (u.active && !confirm(`Deactivate ${u.name}? They will not be able to sign in. Their work is kept.`)) return;
+    try { await Store.adminSetActive(u.uid, !u.active); reload(); } catch (e) { msg(e.message); }
+  });
+}
+function showCreds(username, pw) {
+  $("creds").textContent = `Give these to the annotator: username "${username}", temporary password "${pw}". They choose their own password at first sign-in.`;
+}
+$("naGen").onclick = () => $("naPass").value = genPassword();
+$("newAcc").onsubmit = async e => {
+  e.preventDefault();
+  try {
+    const viaConsole = !!$("naUid").value.trim();
+    const u = await Store.adminCreateAnnotator({ name: $("naName").value, username: $("naUser").value, password: $("naPass").value, uid: $("naUid").value });
+    if (viaConsole) $("creds").textContent = `Profile added for "${u.username}". They sign in with the password you set in the Firebase console.`;
+    else showCreds(u.username, $("naPass").value);
+    $("naName").value = $("naUser").value = $("naUid").value = ""; $("naPass").value = genPassword();
+    msg(`Added ${u.name}.`, true); reload();
+  } catch (err) { msg(err.message); }
+};
+
+// ---- start ----
+startAuth({
+  admin: true,
+  onUser: u => {
+    ME = u;
+    $("whoName").textContent = u.name;
+    $("naPass").value = genPassword();
+    if (Store.backend === "firebase") {
+      // accounts are created in the Firebase console; this form only adds the profile for one
+      $("naUidWrap").hidden = false; $("naUid").required = true;
+      $("naPass").closest(".fld").hidden = true; $("naGen").hidden = true;
+      $("addAccHint").textContent = "First add the user in Firebase console > Authentication > Users as <ID>@" +
+        CITECAST_CONFIG.emailDomain + " with a temporary password, then enter the same ID and their UID here.";
+      $("mockFoot").textContent = "To reset a forgotten password, run annotation/admin_tools/set_password.py on your computer " +
+        "(keeps their account, UID and work). To lock someone out completely, also disable them under Authentication in the Firebase console.";
+    }
+    if (Store.backend === "mock") {
+      $("mockFoot").innerHTML = `Development mode: data is a fake database in this browser. <button class="linkbtn del" id="resetMock">Reset demo data</button>`;
+      $("resetMock").onclick = async () => {
+        if (!confirm("Wipe the fake database back to the hardcoded accounts and demo assignments?")) return;
+        await Store.resetMock(); location.reload();
+      };
+    }
+    show("adminView");
+    tab(pref("tab") || "progress");
+    reload();
+  },
+});
+</script>
+</body>
+</html>

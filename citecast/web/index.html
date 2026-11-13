@@ -1,0 +1,1052 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CiteCast Annotator</title>
+<!-- start downloading the Firebase SDK (same version as store.firebase.js) while the page loads -->
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="authView" class="view center" hidden></div>
+
+<div id="homeView" class="view" hidden>
+  <header>
+    <div class="bar">
+      <div class="brand">CiteCast <span>annotator</span></div>
+      <span class="spacer"></span>
+      <span class="who" id="whoHome"></span>
+      <button class="btn ghost guideBtn" title="Annotation guide">Guide</button>
+      <a class="btn ghost" id="adminLink" href="admin.html" hidden>Admin</a>
+      <button class="btn ghost signout">Sign out</button>
+    </div>
+  </header>
+  <div class="page">
+    <h1>My episodes</h1>
+    <p class="lead">Your work stays in this browser until you upload it. Upload a draft now and then as a backup, and submit the final version when the episode is done.</p>
+    <div class="tablewrap tall"><table id="homeTable"></table></div>
+  </div>
+</div>
+
+<div id="appView" class="view" hidden>
+<header>
+  <div class="bar">
+    <div class="brand">CiteCast <span>annotator</span></div>
+    <button class="btn ghost" id="homeBtn" title="Back to my episodes">&lsaquo; My episodes</button>
+    <label class="fld grow">Episode <select id="episode"></select></label>
+    <div class="fld">Minute
+      <div class="stepper">
+        <button id="prevMin" class="btn icon" title="Previous minute (P)">&lsaquo;</button>
+        <select id="minute" aria-label="Minute"></select>
+        <button id="nextMin" class="btn icon" title="Next minute (N)">&rsaquo;</button>
+      </div>
+    </div>
+    <label class="fld">Player
+      <select id="playerMode">
+        <option value="video">Direct video</option>
+        <option value="embed">Archive embed</option>
+      </select>
+    </label>
+    <label class="fld">Speed
+      <select id="speed"><option>0.5</option><option>0.75</option><option selected>1</option><option>1.25</option><option>1.5</option><option>2</option></select>
+    </label>
+    <button class="btn ghost guideBtn" title="Annotation guide (G)">Guide</button>
+    <button id="helpBtn" class="btn ghost icon" title="Keyboard shortcuts (?)">?</button>
+    <span class="who" id="whoName"></span>
+    <button class="btn ghost signout">Sign out</button>
+  </div>
+  <div id="minuteMap" aria-label="Minutes of this episode"></div>
+</header>
+
+<main>
+  <div class="col">
+    <section class="card">
+      <div id="stage">
+        <canvas id="overlay"></canvas>
+        <div id="spin"></div>
+        <div id="drawHint">Drag to draw a box. Esc to stop.</div>
+      </div>
+      <div id="timeline">
+        <div id="track"></div>
+        <div id="range"></div>
+        <div id="playhead"></div>
+        <div class="handle" id="hStart" title="Drag to set start">S</div>
+        <div class="handle" id="hEnd" title="Drag to set end">E</div>
+        <div class="ticks" id="ticks"></div>
+      </div>
+      <div class="toolbar">
+        <div class="readout">
+          <span>Now<span class="clock" id="clock">0.0</span></span>
+          <span class="start">Start<span class="clock" id="startLbl">-</span></span>
+          <span class="end">End<span class="clock" id="endLbl">-</span></span>
+        </div>
+        <div class="btns">
+          <button id="setStart" class="btn" title="Set start to the current second (S)">Start = now</button>
+          <button id="setEnd" class="btn" title="Set end to the current second (E)">End = now</button>
+          <span class="sep"></span>
+          <button id="drawBtn" class="btn" title="Draw a box around a visual reference on the paused frame (D)">Draw box</button>
+          <button id="clearBoxes" class="btn ghost">Clear boxes</button>
+        </div>
+      </div>
+      <div class="meta"><span id="epInfo"></span><a id="archiveLink" target="_blank" rel="noopener">Open on archive.org &#8599;</a></div>
+      <div class="note" id="modeNote"></div>
+    </section>
+
+    <section class="card">
+      <h2>Captions <span class="sub">this minute</span></h2>
+      <div class="hint">Select words to highlight a spoken reference. Click a time to jump there.</div>
+      <div id="cc"></div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="card" id="formCard">
+      <h2><span id="formTitle">New row</span><span class="badges" id="pendingInfo"></span></h2>
+      <div class="note" id="lockNote"></div>
+      <div class="fld">is_web_ref
+        <div class="seg" id="segRef"><span id="segPill"></span></div>
+        <select id="f_is_web_ref" hidden>
+          <option>yes</option><option>no</option><option>maybe</option><option>ad</option><option>self_ad</option>
+        </select>
+      </div>
+      <div class="grid">
+        <label class="fld">start (0-59) <input id="f_start" type="number" min="0" max="59"></label>
+        <label class="fld">end (0-59) <input id="f_end" type="number" min="0" max="59"></label>
+        <label class="fld">source
+          <!-- option text is what annotators see; value is what is stored and exported -->
+          <select id="f_source"><option></option><option value="visual">On screen</option><option value="cc">Spoken (captions)</option></select>
+        </label>
+        <label class="fld">type
+          <select id="f_type">
+            <option></option>
+            <option value="post">Post (tweet, Facebook or Instagram post)</option>
+            <option value="video">Platform video (TikTok, YouTube clip)</option>
+            <option value="logo">Logo or app icon</option>
+            <option value="web_page">Web page screenshot</option>
+            <option value="written_pointer">Address: URL, @handle, #hashtag, email, QR code</option>
+            <option value="name_text">Platform named in words (headline, ticker)</option>
+            <option value="spoken_mention">Spoken mention</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+      </div>
+      <div class="stack">
+        <div class="fld">social_platform <span class="sub">pick one; leave empty if it is not social media. Several platforms: one row each</span>
+          <div class="chips" id="platformChips"></div>
+          <input id="f_platform_other" placeholder="Other platform name" hidden>
+          <!-- stored values; the chips write these. is_social is yes when any platform is ticked -->
+          <input id="f_social_platform" type="hidden">
+          <input id="f_is_social" type="hidden">
+        </div>
+        <label class="fld">web_reference <input id="f_web_reference"></label>
+        <label class="fld">notes <textarea id="f_notes" rows="2"></textarea></label>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="saveRow"><span id="saveLbl">Add row</span><kbd id="saveKbd"></kbd></button>
+        <button class="btn ghost" id="cancelEdit">Clear form</button>
+        <span class="spacer"></span>
+        <button class="btn" id="noRef" title="Record that this minute has no web reference">No reference in this minute</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="uploadbar">
+        <div><b id="upStatus">Not uploaded</b><div class="sub" id="upDetail"></div></div>
+        <span class="spacer"></span>
+        <button class="btn" id="uploadDraft" title="Save a backup copy on the server; you can keep working">Upload draft</button>
+        <button class="btn primary" id="submitFinal" title="Hand in this episode; it is then locked">Submit final</button>
+      </div>
+      <h2>Rows <span class="sub" id="count"></span></h2>
+      <div class="rowsbar">
+        <label class="check"><input type="checkbox" id="onlyMinute" checked> This minute only</label>
+        <span class="spacer"></span>
+        <button class="btn" id="download">Download CSV</button>
+        <button class="btn ghost danger" id="clearAll">Delete this episode's rows</button>
+      </div>
+      <div class="tablewrap"><table id="rows"></table></div>
+    </section>
+  </div>
+</main>
+</div>
+
+<div id="toasts"></div>
+<aside id="guide" aria-label="Annotation guide" aria-hidden="true">
+  <div class="guidebar">
+    <b>Annotation guide</b>
+    <span class="spacer"></span>
+    <a class="btn ghost" id="guideTab" target="_blank" rel="noopener">Open in new tab &#8599;</a>
+    <button class="btn ghost icon" id="guideClose" title="Close (Esc)">&times;</button>
+  </div>
+  <iframe id="guideFrame" title="Annotation guide"></iframe>
+</aside>
+<div id="help" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+  <div class="panel">
+    <h3>Keyboard shortcuts</h3>
+    <div class="keys">
+      <div><kbd>Space</kbd></div><div>Play or pause</div>
+      <div><kbd>&larr;</kbd> <kbd>&rarr;</kbd></div><div>Back or forward 1 s (with <kbd>Shift</kbd>: 5 s)</div>
+      <div><kbd>S</kbd> <kbd>E</kbd></div><div>Start = now, End = now</div>
+      <div><kbd>D</kbd></div><div>Draw box on or off</div>
+      <div><kbd>P</kbd> <kbd>N</kbd></div><div>Previous or next minute</div>
+      <div><kbd class="modkey"></kbd> <kbd>Enter</kbd></div><div>Add or save the row</div>
+      <div><kbd>Esc</kbd></div><div>Stop drawing, leave a field, close this panel</div>
+      <div><kbd>G</kbd></div><div>Show or hide the annotation guide</div>
+      <div><kbd>?</kbd></div><div>Show this panel</div>
+    </div>
+  </div>
+</div>
+
+<!-- captions are shared with the offline annotator in ../annotator/ -->
+<script src="../annotator/captions.js" async onload="window.captionsLoaded && captionsLoaded()" onerror="window.captionsFailed = true; window.captionsLoaded && captionsLoaded()"></script>
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script src="store.js"></script>
+<script src="store.firebase.js"></script>
+<script>
+// {episode_id: [[start_s, end_s, text], ...]}, seconds from episode start; empty if captions.js is missing
+// captions.js (2.7 MB) loads in parallel with sign-in instead of blocking the page; the panel fills in when it arrives
+const captions = () => window.CITECAST_CAPTIONS || {};
+window.captionsLoaded = () => { cueKey = ""; if (!$("appView").hidden) renderCC(); };
+
+// ---- constants and state ----
+const REF_OPTS = ["yes","no","maybe","ad","self_ad"];
+const PREF = "citecast_annotator_v1";   // prefix for small per-browser preferences
+const COLORS = ["rgba(66,133,244,.35)","rgba(234,67,53,.35)","rgba(52,168,83,.35)","rgba(171,71,188,.35)",
+                "rgba(255,112,67,.4)","rgba(0,172,193,.35)","rgba(124,179,66,.4)","rgba(240,98,146,.35)"];
+const SOLID = c => c.replace(/,[.\d]+\)$/, ",1)");
+const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform);
+
+// small localStorage wrapper; the page keeps working if storage is blocked
+const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem(PREF + "_" + k); localStorage.setItem(PREF + "_" + k, v); } catch (e) { return null; } };
+
+let USER = null;     // signed-in account, from Store
+let ASSIGN = [];     // this annotator's assignments, from Store
+// The annotator's rows for all their episodes live in this browser until uploaded.
+let rows = [];
+const rowsKey = () => `citecast_rows_v1_${USER.uid}`;
+function loadRows() { try { rows = JSON.parse(localStorage.getItem(rowsKey()) || "[]"); } catch (e) { rows = []; } }
+// edited = false when the rows came from the server, so they do not count as changes since the last upload
+function save(edited = true) {
+  try { localStorage.setItem(rowsKey(), JSON.stringify(rows)); } catch (e) {}
+  if (edited && ep()) markEdited(ep());
+}
+// last local change per episode, compared with the upload time to show "changes not uploaded"
+const editedKey = () => `citecast_edited_v1_${USER.uid}`;
+function editedMap() { try { return JSON.parse(localStorage.getItem(editedKey()) || "{}"); } catch (e) { return {}; } }
+function markEdited(id) { const m = editedMap(); m[id] = new Date().toISOString(); try { localStorage.setItem(editedKey(), JSON.stringify(m)); } catch (e) {} }
+// upload time of the server copy this browser's rows match, per episode; a different time on the server
+// means someone uploaded from another computer or browser since
+const syncedKey = () => `citecast_synced_v1_${USER.uid}`;
+function syncedMap() { try { return JSON.parse(localStorage.getItem(syncedKey()) || "{}"); } catch (e) { return {}; } }
+function markSynced(id, at) { const m = syncedMap(); m[id] = at; try { localStorage.setItem(syncedKey(), JSON.stringify(m)); } catch (e) {} }
+const serverIsNewer = a => !!a.uploaded_at && a.uploaded_at !== syncedMap()[a.episode_id];
+const assignment = id => ASSIGN.find(a => a.episode_id === id);
+const locked = () => assignment(ep())?.status === "final";
+const LOCKED_MSG = "This episode is submitted and locked.";
+if (pref("speed")) $("speed").value = pref("speed");
+if (pref("player")) $("playerMode").value = pref("player");
+$("saveKbd").textContent = IS_MAC ? "⌘↵" : "Ctrl ↵";
+document.querySelector(".modkey").textContent = IS_MAC ? "⌘" : "Ctrl";
+
+let pendingBoxes = [];   // [{t,x,y,w,h}] normalized 0-1 to the video frame
+let pendingHl = [];      // [{cue,a,b}] character ranges in this minute's cues
+let editing = -1;        // index in rows being edited, -1 for a new row
+let drawing = false;
+let lastSaved = -1;      // row index to flash once in the table
+let shown = { ep: null, min: null };   // episode and minute currently loaded
+
+const ep = () => $("episode").value;
+const minute = () => +$("minute").value;
+const video = () => document.querySelector("#stage video");
+const rowColor = i => COLORS[i % COLORS.length];
+
+
+// ---- episode and minute pickers ----
+function fillEpisodeSelect() {
+  const keep = $("episode").value;
+  $("episode").innerHTML = "";
+  ASSIGN.forEach(a => {
+    const [id, prog, date, start] = episodeInfo(a.episode_id);
+    $("episode").add(new Option(`${network(id)}  \u00B7  ${date} ${start}  \u00B7  ${prog}`, id));
+  });
+  if (keep && !assignment(keep)) {   // keep the open episode in the picker if it was just unassigned
+    const [id, prog, date, start] = episodeInfo(keep);
+    $("episode").add(new Option(`${network(id)}  \u00B7  ${date} ${start}  \u00B7  ${prog}  (no longer assigned)`, id));
+  }
+  if (keep) $("episode").value = keep;
+}
+
+function fillMinutes() {
+  const keep = minute() || 0, n = minuteCount(ep());
+  $("minute").innerHTML = "";
+  for (let i = 0; i < n; i++) $("minute").add(new Option(pad(i), i));
+  $("minute").value = Math.min(keep, n - 1);
+}
+
+function isDirty() {
+  return editing >= 0 || pendingBoxes.length > 0 || pendingHl.length > 0 ||
+         FIELDS.some(f => f !== "is_web_ref" && $("f_" + f).value.trim() !== "");
+}
+
+// Load an episode minute. Asks first if the form holds a row that has not been saved.
+function gotoMinute(m, id = ep()) {
+  if (shown.ep !== null && (id !== shown.ep || m !== shown.min) && isDirty() &&
+      !confirm("You have a row that is not saved. Discard it?")) {
+    $("episode").value = shown.ep; fillMinutes(); $("minute").value = shown.min;
+    return;
+  }
+  $("episode").value = id; fillMinutes(); $("minute").value = Math.min(m, minuteCount(id) - 1);
+  shown = { ep: id, min: minute() };
+  resetForm(); loadPlayer(); renderCC(); renderRows(); remember();
+}
+
+function remember() {
+  pref(`min_${USER.uid}_${shown.ep}`, shown.min);
+  try { history.replaceState(null, "", `#${shown.ep}/${shown.min}`); } catch (e) {}
+}
+
+// ---- player ----
+const busy = on => $("spin").classList.toggle("show", on);
+
+function loadPlayer() {
+  const id = ep(), s = minute() * 60, e = s + 60;
+  const stage = $("stage");
+  stage.querySelectorAll("video,iframe").forEach(n => n.remove());
+  $("archiveLink").href = `https://archive.org/details/${id}/start/${s}/end/${e}`;
+  const info = EPISODES.find(x => x[0] === id);
+  $("epInfo").textContent = `${id}  ·  minute ${pad(minute())}  ·  episode seconds ${s}-${e}  ·  aired ${info[2]} ${info[3]}`;
+  setDrawing(false);
+  busy(true);
+  if ($("playerMode").value === "embed") {
+    stage.style.aspectRatio = "4/3";
+    const f = document.createElement("iframe");
+    f.src = `https://archive.org/embed/${id}?start=${s}&end=${e}`;
+    f.allow = "autoplay; fullscreen; picture-in-picture";
+    f.allowFullscreen = true;
+    f.onload = () => busy(false);
+    stage.insertBefore(f, $("overlay"));
+    $("modeNote").textContent = "Archive embed: the page cannot read or move its time, so the timeline does not follow it and boxes cannot be drawn. Its settings menu belongs to the Archive's player. Use Direct video for full features.";
+    ["setStart","setEnd","drawBtn","speed"].forEach(k => $(k).disabled = true);
+  } else {
+    const v = document.createElement("video");
+    v.controls = true; v.preload = "auto";
+    v.src = `https://archive.org/download/${id}/${id}.mp4?exact=1&start=${s}&end=${e}`;
+    v.playbackRate = +$("speed").value;
+    v.addEventListener("loadedmetadata", () => {
+      if (v.videoWidth) stage.style.aspectRatio = `${v.videoWidth}/${v.videoHeight}`;
+      sizeCanvas();
+    });
+    v.addEventListener("timeupdate", tick);
+    v.addEventListener("seeked", tick);
+    v.addEventListener("pause", tick);
+    ["waiting","loadstart"].forEach(k => v.addEventListener(k, () => busy(true)));
+    ["canplay","playing","seeked"].forEach(k => v.addEventListener(k, () => busy(false)));
+    v.addEventListener("error", () => { busy(false); $("modeNote").textContent = "Video failed to load. Check the internet connection, or try the Archive embed."; });
+    stage.insertBefore(v, $("overlay"));
+    $("modeNote").textContent = "";
+    ["setStart","setEnd","drawBtn","speed"].forEach(k => $(k).disabled = false);
+  }
+  tick();
+}
+$("speed").onchange = () => { const v = video(); if (v) v.playbackRate = +$("speed").value; pref("speed", $("speed").value); };
+
+function nowSec() { const v = video(); return v ? Math.min(59, Math.floor(v.currentTime)) : null; }
+function tick() {
+  const v = video(), t = v ? v.currentTime : 0;
+  $("clock").textContent = v ? t.toFixed(1) : "n/a";
+  $("playhead").style.left = `${Math.min(60, t) / 60 * 100}%`;
+  highlightCurrentCue(t);
+  drawOverlay();
+}
+// smooth playhead while playing; timeupdate alone fires only about 4 times a second
+(function frame() {
+  const v = video();
+  if (v && !v.paused && !v.seeking) tick();
+  requestAnimationFrame(frame);
+})();
+
+// ---- timeline with start and end handles ----
+(function buildTicks() {
+  for (let s = 0; s <= 60; s += 5) {
+    const sp = document.createElement("span");
+    sp.style.left = `${s / 60 * 100}%`; sp.textContent = s;
+    $("ticks").appendChild(sp);
+  }
+})();
+
+function getSE() {
+  const s = $("f_start").value === "" ? null : +$("f_start").value;
+  const e = $("f_end").value === "" ? null : +$("f_end").value;
+  return [s, e];
+}
+function setSE(s, e) {
+  if (s !== undefined) $("f_start").value = s === null ? "" : s;
+  if (e !== undefined) $("f_end").value = e === null ? "" : e;
+  renderTimeline();
+}
+function renderTimeline() {
+  const [s, e] = getSE();
+  const S = s ?? 0, E = e ?? 59;
+  $("hStart").style.left = `${S / 60 * 100}%`;
+  $("hEnd").style.left = `${(E + 1) / 60 * 100}%`;   // end handle sits at the end of its second
+  $("hStart").style.opacity = s === null ? .45 : 1;
+  $("hEnd").style.opacity = e === null ? .45 : 1;
+  $("hStart").dataset.v = s === null ? "start" : `start ${s}s`;
+  $("hEnd").dataset.v = e === null ? "end" : `end ${e}s`;
+  $("range").style.left = `${S / 60 * 100}%`;
+  $("range").style.width = `${Math.max(0, E + 1 - S) / 60 * 100}%`;
+  $("startLbl").textContent = s ?? "-";
+  $("endLbl").textContent = e ?? "-";
+}
+["f_start","f_end"].forEach(k => $(k).addEventListener("input", renderTimeline));
+
+function secFromX(clientX, forEnd) {
+  const r = $("track").getBoundingClientRect();
+  const raw = (clientX - r.left) / r.width * 60;
+  const s = forEnd ? Math.round(raw) - 1 : Math.round(raw);
+  return Math.max(0, Math.min(59, s));
+}
+function seek(t) { const v = video(); if (v) { v.pause(); v.currentTime = Math.min(59.9, Math.max(0, t)); } }
+function nudge(d) { const v = video(); if (v) v.currentTime = Math.min(59.9, Math.max(0, v.currentTime + d)); }
+
+function dragHandle(handle, isEnd) {
+  handle.addEventListener("pointerdown", ev => {
+    ev.preventDefault(); handle.setPointerCapture(ev.pointerId);
+    $("timeline").classList.add("dragging"); handle.classList.add("active");
+    const move = e2 => {
+      let s = secFromX(e2.clientX, isEnd);
+      const [cs, ce] = getSE();
+      if (isEnd) { if (cs !== null && s < cs) s = cs; setSE(undefined, s); seek(s + 0.5); }
+      else { if (ce !== null && s > ce) s = ce; setSE(s, undefined); seek(s + 0.05); }
+    };
+    move(ev);
+    const up = () => {
+      $("timeline").classList.remove("dragging"); handle.classList.remove("active");
+      handle.removeEventListener("pointermove", move); handle.removeEventListener("pointerup", up);
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", up);
+  });
+}
+dragHandle($("hStart"), false);
+dragHandle($("hEnd"), true);
+
+// click or drag along the track to scrub
+$("track").addEventListener("pointerdown", ev => {
+  const track = $("track"), r = track.getBoundingClientRect();
+  const go = e2 => seek((e2.clientX - r.left) / r.width * 60);
+  track.setPointerCapture(ev.pointerId); go(ev);
+  const up = () => { track.removeEventListener("pointermove", go); track.removeEventListener("pointerup", up); };
+  track.addEventListener("pointermove", go);
+  track.addEventListener("pointerup", up);
+});
+$("setStart").onclick = () => { const t = nowSec(); if (t !== null) { const [, e] = getSE(); setSE(t, e !== null && e < t ? t : undefined); } };
+$("setEnd").onclick = () => { const t = nowSec(); if (t !== null) { const [s] = getSE(); setSE(s !== null && s > t ? t : undefined, t); } };
+
+// ---- bounding boxes ----
+function sizeCanvas() {
+  const c = $("overlay"), r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  c.width = Math.round(r.width * d); c.height = Math.round(r.height * d);
+  drawOverlay();
+}
+window.addEventListener("resize", () => { sizeCanvas(); updateFieldStates(); });
+
+function setDrawing(on) {
+  drawing = on && !!video() && !locked();
+  $("stage").classList.toggle("drawing", drawing);
+  $("drawBtn").classList.toggle("on", drawing);
+  if (drawing) { const v = video(); if (v) v.pause(); }
+}
+$("drawBtn").onclick = () => setDrawing(!drawing);
+$("clearBoxes").onclick = () => { pendingBoxes = []; drawOverlay(); updatePendingInfo(); };
+
+let dragStart = null, dragNow = null;
+$("overlay").addEventListener("pointerdown", ev => {
+  if (!drawing) return;
+  const r = $("overlay").getBoundingClientRect();
+  dragStart = [(ev.clientX - r.left) / r.width, (ev.clientY - r.top) / r.height];
+  dragNow = dragStart;
+  $("overlay").setPointerCapture(ev.pointerId);
+});
+$("overlay").addEventListener("pointermove", ev => {
+  if (!dragStart) return;
+  const r = $("overlay").getBoundingClientRect();
+  dragNow = [Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)), Math.max(0, Math.min(1, (ev.clientY - r.top) / r.height))];
+  drawOverlay();
+});
+$("overlay").addEventListener("pointerup", () => {
+  if (!dragStart) return;
+  const x = Math.min(dragStart[0], dragNow[0]), y = Math.min(dragStart[1], dragNow[1]);
+  const w = Math.abs(dragNow[0] - dragStart[0]), h = Math.abs(dragNow[1] - dragStart[1]);
+  dragStart = dragNow = null;
+  if (w > 0.01 && h > 0.01) {
+    const t = nowSec() ?? 0;
+    pendingBoxes.push({ t, x, y, w, h });
+    // a box means a visual reference
+    $("f_source").value = "visual";
+    if ($("f_type").value === "spoken_mention") $("f_type").value = "";
+    const [s, e] = getSE();
+    if (s === null) setSE(t, e === null ? t : undefined);
+    updatePendingInfo(); updateFieldStates();
+  }
+  drawOverlay();
+});
+
+function drawOverlay() {
+  const c = $("overlay"), g = c.getContext("2d");
+  g.clearRect(0, 0, c.width, c.height);
+  const v = video(); if (!v) return;
+  const t = v.currentTime, W = c.width, H = c.height, d = window.devicePixelRatio || 1;
+  const box = (b, color, label, dashed) => {
+    const X = b.x * W, Y = b.y * H, BW = b.w * W, BH = b.h * H;
+    g.lineWidth = 2.5 * d; g.strokeStyle = color; g.setLineDash(dashed ? [8 * d, 5 * d] : []);
+    g.strokeRect(X, Y, BW, BH);
+    if (label) {
+      g.font = `600 ${12 * d}px "IBM Plex Sans", system-ui, sans-serif`;
+      const tw = g.measureText(label).width + 10 * d, th = 17 * d;
+      const ly = Y - th < 0 ? Y : Y - th;
+      g.fillStyle = color; g.fillRect(X - 1.25 * d, ly, tw, th);
+      g.fillStyle = color === "#ffd600" ? "#3a2f00" : "#fff";
+      g.fillText(label, X + 4 * d, ly + 12.5 * d);
+    }
+  };
+  // saved rows of this minute, shown while the video is inside their time range
+  rows.forEach((r, i) => {
+    if (r.episode_id !== ep() || +r.minute !== minute() || i === editing) return;
+    const s = +r.start, e = +r.end;
+    if (!(t >= s && t < e + 1)) return;
+    (r.boxes || []).forEach(b => box(b, SOLID(rowColor(i)), `#${i + 1}`, false));
+  });
+  pendingBoxes.forEach(b => box(b, "#ffd600", "new", true));
+  if (dragStart && dragNow) box({ x: Math.min(dragStart[0], dragNow[0]), y: Math.min(dragStart[1], dragNow[1]),
+    w: Math.abs(dragNow[0] - dragStart[0]), h: Math.abs(dragNow[1] - dragStart[1]) }, "#ffd600", "", true);
+}
+
+// ---- captions and highlighter ----
+let cueKey = "", cueCache = [];
+function minuteCues() {
+  const key = ep() + "/" + minute();
+  if (key !== cueKey) {
+    const base = minute() * 60;
+    cueCache = (captions()[ep()] || []).map(([s, e, txt]) => ({ s: s - base, e: e - base, txt })).filter(c => c.e > 0 && c.s < 60);
+    cueKey = key;
+  }
+  return cueCache;
+}
+
+let nowCue = -1, ccHoldUntil = 0;
+function renderCC() {
+  const cues = minuteCues(), box = $("cc");
+  nowCue = -1;
+  if (!window.CITECAST_CAPTIONS) {
+    box.innerHTML = window.captionsFailed ? '<div class="empty">Captions could not be loaded (annotator/captions.js is missing).</div>'
+                                          : '<div class="empty">Loading captions...</div>';
+    return;
+  }
+  if (!cues.length) { box.innerHTML = '<div class="empty">No captions in this minute.</div>'; return; }
+  // colour per character: saved rows first, the pending selection on top
+  const paint = cues.map(c => new Array(c.txt.length).fill(null));
+  rows.forEach((r, i) => {
+    if (r.episode_id !== ep() || +r.minute !== minute() || i === editing) return;
+    (r.hl || []).forEach(h => { if (paint[h.cue]) for (let k = h.a; k < h.b; k++) paint[h.cue][k] = rowColor(i); });
+  });
+  pendingHl.forEach(h => { if (paint[h.cue]) for (let k = h.a; k < h.b; k++) paint[h.cue][k] = "var(--pending)"; });
+  box.innerHTML = cues.map((c, i) => {
+    let html = "", k = 0;
+    while (k < c.txt.length) {
+      const col = paint[i][k]; let j = k;
+      while (j < c.txt.length && paint[i][j] === col) j++;
+      const part = esc(c.txt.slice(k, j));
+      html += col ? `<mark style="background:${col}">${part}</mark>` : part;
+      k = j;
+    }
+    const shownS = Math.max(0, c.s);
+    return `<div class="cue" data-i="${i}"><span class="t" data-s="${shownS}">${pad(Math.floor(shownS))}s</span><span class="txt" data-i="${i}">${html}</span></div>`;
+  }).join("");
+  box.querySelectorAll(".t").forEach(n => n.onclick = () => seek(+n.dataset.s));
+  const v = video(); highlightCurrentCue(v ? v.currentTime : 0);
+}
+
+// marks the cue being spoken and keeps it in view, unless the annotator is scrolling or selecting
+function highlightCurrentCue(t) {
+  const cues = minuteCues();
+  let idx = -1;
+  cues.forEach((c, i) => { if (t >= c.s && t < c.e) idx = i; });
+  if (idx === nowCue) return;
+  nowCue = idx;
+  const box = $("cc");
+  box.querySelectorAll(".cue").forEach(n => n.classList.toggle("now", +n.dataset.i === idx));
+  if (idx < 0 || Date.now() < ccHoldUntil) return;
+  const n = box.querySelector(`.cue[data-i="${idx}"]`);
+  if (n && (n.offsetTop < box.scrollTop || n.offsetTop + n.offsetHeight > box.scrollTop + box.clientHeight))
+    box.scrollTo({ top: n.offsetTop - box.clientHeight / 3, behavior: "smooth" });
+}
+$("cc").addEventListener("wheel", () => { ccHoldUntil = Date.now() + 4000; }, { passive: true });
+$("cc").addEventListener("pointerdown", () => { ccHoldUntil = Infinity; });
+
+// character offset of (node, offset) inside a cue text span
+function offsetIn(span, node, off) {
+  const w = document.createTreeWalker(span, NodeFilter.SHOW_TEXT);
+  let n, total = 0;
+  while ((n = w.nextNode())) { if (n === node) return total + off; total += n.length; }
+  return node === span ? (off === 0 ? 0 : span.textContent.length) : total;
+}
+
+$("cc").addEventListener("mouseup", () => {
+  ccHoldUntil = Date.now() + 2000;
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+  if (locked()) { sel.removeAllRanges(); return; }
+  const range = sel.getRangeAt(0), cues = minuteCues(), segs = [];
+  $("cc").querySelectorAll(".txt").forEach(span => {
+    if (!range.intersectsNode(span)) return;
+    const i = +span.dataset.i, len = span.textContent.length;
+    const a = span.contains(range.startContainer) ? offsetIn(span, range.startContainer, range.startOffset) : 0;
+    const b = span.contains(range.endContainer) ? offsetIn(span, range.endContainer, range.endOffset) : len;
+    if (b > a) segs.push({ cue: i, a, b });
+  });
+  sel.removeAllRanges();
+  if (!segs.length) return;
+  pendingHl.push(...segs);
+  if (!$("f_source").value) $("f_source").value = "cc";
+  if ($("f_source").value === "cc") $("f_type").value = "spoken_mention";
+  // start and end span every highlighted caption of this row; the annotator should check them against the audio
+  const hit = pendingHl.map(h => cues[h.cue]).filter(Boolean);
+  const s = Math.min(59, Math.max(0, Math.floor(Math.min(...hit.map(c => c.s)))));
+  setSE(s, Math.min(59, Math.max(s, Math.ceil(Math.max(...hit.map(c => c.e))) - 1)));
+  renderCC(); updatePendingInfo(); updateFieldStates();
+});
+
+// ---- form ----
+// social_platform: one chip per row (several platforms = several rows); "Other" stores the typed name
+const PLATFORMS = [["x","X / Twitter"],["facebook","Facebook"],["instagram","Instagram"],["youtube","YouTube"],
+  ["tiktok","TikTok"],["truth_social","Truth Social"],["threads","Threads"],["bluesky","Bluesky"],["reddit","Reddit"],
+  ["linkedin","LinkedIn"],["snapchat","Snapchat"],["telegram","Telegram"],["rumble","Rumble"]];
+const PLATFORM_ALIAS = { twitter: "x", "x / twitter": "x", "truth social": "truth_social" };
+PLATFORMS.concat([["other","Other"]]).forEach(([v, label]) => {
+  const l = document.createElement("label");
+  l.className = "chip";
+  l.innerHTML = `<input type="checkbox" value="${v}">${label}`;
+  $("platformChips").appendChild(l);
+});
+const platformKey = s => { const t = s.trim().toLowerCase(); return PLATFORM_ALIAS[t] || (PLATFORMS.find(p => p[0] === t || p[1].toLowerCase() === t) || [])[0]; };
+// chips and the Other box -> hidden stored fields
+function writePlatforms() {
+  const ticked = [...$("platformChips").querySelectorAll("input:checked")].map(c => c.value);
+  const other = ticked.includes("other") && $("f_platform_other").value.trim() ? [$("f_platform_other").value.trim()] : [];
+  const list = ticked.filter(v => v !== "other").concat(other);
+  $("f_social_platform").value = list.join(", ");
+  $("f_is_social").value = ticked.length ? "yes" : "";
+  $("f_platform_other").hidden = !ticked.includes("other");
+  $("platformChips").querySelectorAll(".chip").forEach(l => l.classList.toggle("on", l.firstChild.checked));
+}
+// hidden stored field -> chips (after reset or when editing a saved row)
+function readPlatforms() {
+  const known = [], other = [];
+  $("f_social_platform").value.split(",").map(s => s.trim()).filter(Boolean)
+    .forEach(s => { const k = platformKey(s); k ? known.push(k) : other.push(s); });
+  $("platformChips").querySelectorAll("input").forEach(c => c.checked = c.value === "other" ? other.length > 0 : known.includes(c.value));
+  $("f_platform_other").value = other.join(", ");
+  writePlatforms();
+}
+$("platformChips").onchange = e => {
+  // single choice: picking a chip clears the others; clicking the picked chip again clears it
+  if (e.target.checked) $("platformChips").querySelectorAll("input").forEach(c => { if (c !== e.target) c.checked = false; });
+  writePlatforms(); if ($("platformChips").querySelector('input[value="other"]').checked && !$("f_platform_other").value) $("f_platform_other").focus(); };
+$("f_platform_other").oninput = writePlatforms;
+
+REF_OPTS.forEach(v => {
+  const b = document.createElement("button");
+  b.type = "button"; b.textContent = v; b.dataset.v = v;
+  b.onclick = () => { $("f_is_web_ref").value = v; updateFieldStates(); };
+  $("segRef").appendChild(b);
+});
+
+// syncs the is_web_ref buttons and dims the fields that the chosen value does not use
+function updateFieldStates() {
+  const ref = $("f_is_web_ref").value;
+  const btns = $("segRef").querySelectorAll("button");
+  btns.forEach(b => b.classList.toggle("active", b.dataset.v === ref));
+  const a = $("segRef").querySelector("button.active"), pill = $("segPill");
+  if (a && a.offsetWidth) {
+    pill.style.width = a.offsetWidth + "px";
+    pill.style.transform = `translateX(${a.offsetLeft}px)`;
+    requestAnimationFrame(() => $("segRef").classList.add("ready"));
+  }
+  const minimal = ref === "no" || ref === "ad";
+  ["source","type","web_reference","social_platform"].forEach(f => $("f_" + f).closest(".fld").classList.toggle("dim", minimal));
+}
+
+function updatePendingInfo() {
+  const parts = [];
+  if (pendingBoxes.length) parts.push(`${pendingBoxes.length} box${pendingBoxes.length > 1 ? "es" : ""}`);
+  if (pendingHl.length) parts.push(`${pendingHl.length} highlight${pendingHl.length > 1 ? "s" : ""}`);
+  $("pendingInfo").innerHTML = parts.map(p => `<span class="badge">${p}</span>`).join("");
+}
+
+function resetForm() {
+  FIELDS.forEach(f => $("f_" + f).value = "");
+  readPlatforms();
+  $("f_is_web_ref").value = "yes";
+  pendingBoxes = []; pendingHl = []; editing = -1;
+  $("formTitle").textContent = "New row";
+  $("saveLbl").textContent = "Add row";
+  $("formCard").classList.remove("editing");
+  setSE(null, null); updatePendingInfo(); updateFieldStates(); drawOverlay();
+}
+$("cancelEdit").onclick = () => { resetForm(); renderCC(); renderRows(); };
+
+$("f_source").onchange = () => { if ($("f_source").value === "cc") $("f_type").value = "spoken_mention"; updateFieldStates(); };
+$("saveRow").onclick = () => {
+  if (locked()) return msg(LOCKED_MSG);
+  const r = { annotator: USER.name, episode_id: ep(), minute: pad(minute()) };
+  if ($("platformChips").querySelector('input[value="other"]').checked && !$("f_platform_other").value.trim())
+    return msg("Type the platform name for Other, or untick Other.");
+  writePlatforms();
+  FIELDS.forEach(f => r[f] = $("f_" + f).value.trim());
+  r.boxes = pendingBoxes.slice(); r.hl = pendingHl.slice();
+  const ref = r.is_web_ref;
+  // no and ad rows carry no platform; every other row is social exactly when a platform is ticked
+  if (ref === "no" || ref === "ad") { r.social_platform = ""; r.is_social = ""; }
+  else r.is_social = r.social_platform ? "yes" : "no";
+  if (ref !== "no" && (r.start === "" || r.end === "")) return msg("Set start and end (drag S and E on the timeline).");
+  if (r.start !== "" && r.end !== "" && +r.end < +r.start) return msg("End is before start.");
+  if ((ref === "yes" || ref === "maybe") && (!r.source || !r.type))
+    return msg("yes and maybe rows need source and type.");
+  if (r.source === "cc" && r.type !== "spoken_mention") return msg("Source \"Spoken (captions)\" must use type \"Spoken mention\".");
+  if (r.source === "visual" && r.type === "spoken_mention") return msg("\"Spoken mention\" is only for source \"Spoken (captions)\".");
+  if (r.source === "visual" && !r.boxes.length) return msg("On-screen rows need a bounding box: pause on the frame and use Draw box.");
+  if (ref === "ad" && (r.source || r.type || r.web_reference)) return msg("ad rows take only start and end (see guide section 6).");
+  const wasEdit = editing >= 0;
+  if (wasEdit) rows[editing] = r; else rows.push(r);
+  lastSaved = wasEdit ? editing : rows.length - 1;
+  save(); resetForm(); renderCC(); renderRows();
+  msg(wasEdit ? `Row #${lastSaved + 1} updated.` : `Row added to minute ${r.minute}.`, true);
+};
+
+$("noRef").onclick = () => {
+  if (locked()) return msg(LOCKED_MSG);
+  if (rows.some(r => r.episode_id === ep() && +r.minute === minute() && r.is_web_ref === "no"))
+    return msg(`Minute ${pad(minute())} is already recorded as no.`);
+  const r = { annotator: USER.name, episode_id: ep(), minute: pad(minute()), boxes: [], hl: [] };
+  FIELDS.forEach(f => r[f] = ""); r.is_web_ref = "no";
+  rows.push(r); lastSaved = rows.length - 1; save(); renderRows();
+  const next = minute() + 1;
+  toast(`Minute ${r.minute} recorded as no.`, "ok", next < minuteCount(ep()) ? { label: "Next minute", run: () => gotoMinute(next) } : null);
+};
+
+function startEdit(i) {
+  if (locked()) return msg(LOCKED_MSG);
+  if (editing !== i && isDirty() && !confirm("You have a row that is not saved. Discard it?")) return;
+  const r = rows[i];
+  const moved = r.episode_id !== ep() || +r.minute !== minute();
+  if (r.episode_id !== ep()) { $("episode").value = r.episode_id; fillMinutes(); }
+  $("minute").value = +r.minute;
+  shown = { ep: r.episode_id, min: +r.minute };
+  if (moved) { loadPlayer(); remember(); }
+  FIELDS.forEach(f => $("f_" + f).value = r[f] ?? "");
+  readPlatforms();
+  pendingBoxes = (r.boxes || []).slice(); pendingHl = (r.hl || []).slice(); editing = i;
+  $("formTitle").textContent = `Editing row #${i + 1}`;
+  $("saveLbl").textContent = "Save changes";
+  $("formCard").classList.add("editing");
+  renderTimeline(); updatePendingInfo(); updateFieldStates(); renderCC(); renderRows(); drawOverlay();
+  if (r.start !== "") seek(+r.start + 0.05);
+}
+
+// ---- rows table, minute map and CSV ----
+
+function renderRows() {
+  const only = $("onlyMinute").checked;
+  const list = rows.map((r, i) => [r, i]).filter(([r]) => r.episode_id === ep() && (!only || +r.minute === minute()))
+    .sort((a, b) => a[0].minute.localeCompare(b[0].minute) || (+a[0].start || 0) - (+b[0].start || 0));
+  const cols = ["minute","is_web_ref","start","end","source","type","web_reference","is_social","social_platform","notes"];
+  const head = `<thead><tr><th></th><th>#</th>${cols.map(c => `<th>${c}</th>`).join("")}<th>boxes</th></tr></thead>`;
+  const body = list.length ? list.map(([r, i]) => {
+    const cls = [i === editing ? "editing" : "", i === lastSaved ? "flash" : ""].join(" ").trim();
+    const cell = c => c === "is_web_ref" ? `<td><span class="val v-${esc(r[c])}">${esc(r[c])}</span></td>`
+      : c === "web_reference" || c === "notes" ? `<td class="wide">${esc(r[c])}</td>`
+      : `<td class="num">${esc(r[c])}</td>`;
+    return `<tr${cls ? ` class="${cls}"` : ""}>
+      <td><div class="rowact"><button data-e="${i}">Edit</button><button class="del" data-d="${i}">Delete</button></div></td>
+      <td class="num"><span class="swatch" style="background:${SOLID(rowColor(i))}"></span>${i + 1}</td>
+      ${cols.map(cell).join("")}<td class="num">${(r.boxes || []).length || ""}</td></tr>`;
+  }).join("") : `<tr><td colspan="${cols.length + 3}"><div class="empty">${only ? "No rows for this minute yet. Mark a reference above, or use \"No reference in this minute\"." : "No rows for this episode yet."}</div></td></tr>`;
+  $("rows").innerHTML = head + `<tbody>${body}</tbody>`;
+  lastSaved = -1;
+  $("rows").querySelectorAll("button[data-e]").forEach(b => b.onclick = () => startEdit(+b.dataset.e));
+  $("rows").querySelectorAll("button[data-d]").forEach(b => b.onclick = () => deleteRow(+b.dataset.d));
+  const epRows = rows.filter(r => r.episode_id === ep());
+  const done = new Set(epRows.map(r => r.minute)).size;
+  $("count").textContent = `${epRows.length} in this episode · ${done}/${minuteCount(ep())} minutes done · ${rows.length} total`;
+  renderMap();
+  renderUpload();
+}
+$("onlyMinute").onchange = renderRows;
+
+function deleteRow(i) {
+  if (locked()) return msg(LOCKED_MSG);
+  const removed = rows[i];
+  rows.splice(i, 1);
+  if (editing === i) resetForm(); else if (editing > i) editing--;
+  save(); renderCC(); renderRows(); drawOverlay();
+  toast(`Row #${i + 1} deleted.`, "", { label: "Undo", run: () => {
+    rows.splice(i, 0, removed);
+    if (editing >= i) editing++;
+    lastSaved = i; save(); renderCC(); renderRows(); drawOverlay();
+  } });
+}
+
+// one bar per minute: blue = has a yes/maybe row, grey = only other rows, outlined = current
+function renderMap() {
+  const n = minuteCount(ep()), map = $("minuteMap"), by = {};
+  rows.forEach(r => { if (r.episode_id === ep()) (by[+r.minute] ||= []).push(r.is_web_ref); });
+  if (map.children.length !== n) {
+    map.innerHTML = "";
+    for (let i = 0; i < n; i++) { const c = document.createElement("i"); c.dataset.m = i; map.appendChild(c); }
+  }
+  [...map.children].forEach((c, i) => {
+    const v = by[i] || [];
+    c.className = [i === minute() ? "cur" : "", v.some(x => x === "yes" || x === "maybe") ? "ref" : v.length ? "done" : ""].join(" ").trim();
+    c.title = `Minute ${pad(i)}: ${v.length ? `${v.length} row${v.length > 1 ? "s" : ""}` : "not annotated"}`;
+  });
+}
+$("minuteMap").onclick = e => { const c = e.target.closest("i"); if (c) gotoMinute(+c.dataset.m); };
+
+$("download").onclick = () => {
+  const mine = sortRows(rows.filter(r => r.episode_id === ep()));
+  if (!mine.length) return msg("There are no rows for this episode yet.");
+  downloadText(`citecast_${USER.username}_${ep()}.csv`, toCsv(mine));
+  msg(`Downloaded ${mine.length} rows.`, true);
+};
+$("clearAll").onclick = () => {
+  if (locked()) return msg(LOCKED_MSG);
+  if (!confirm("Delete every row of this episode in this browser? Anything you already uploaded stays on the server.")) return;
+  rows = rows.filter(r => r.episode_id !== ep()); save(); resetForm(); renderCC(); renderRows();
+};
+
+// ---- keyboard shortcuts and help ----
+function toggleHelp(on) { $("help").classList.toggle("open", on ?? !$("help").classList.contains("open")); }
+$("helpBtn").onclick = () => toggleHelp(true);
+$("help").onclick = e => { if (e.target === $("help")) toggleHelp(false); };
+
+// Guide side panel. The doc loads on first open only; /preview is Google's embeddable read-only view.
+const GUIDE_URL = (window.CITECAST_CONFIG || {}).guideUrl || "";
+const guideOpen = () => $("guide").classList.contains("open");
+function toggleGuide(on) {
+  on = on ?? !guideOpen();
+  if (on && !$("guideFrame").src) $("guideFrame").src = GUIDE_URL.replace(/\/(edit|view)[^/]*$/, "/preview");
+  $("guide").classList.toggle("open", on);
+  $("guide").setAttribute("aria-hidden", String(!on));
+}
+$("guideTab").href = GUIDE_URL;
+document.querySelectorAll(".guideBtn").forEach(b => { b.hidden = !GUIDE_URL; b.onclick = () => toggleGuide(); });
+$("guideClose").onclick = () => toggleGuide(false);
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && guideOpen()) { toggleGuide(false); return; }
+  if ($("appView").hidden) return;   // shortcuts only on the annotation screen
+  const el = e.target, typing = /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable;
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); $("saveRow").click(); return; }
+  if (e.key === "Escape") {
+    if ($("help").classList.contains("open")) toggleHelp(false);
+    else if (drawing) setDrawing(false);
+    else if (typing) el.blur();
+    return;
+  }
+  if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+  const v = video(), k = e.key;
+  if (k === "?") { toggleHelp(); return; }
+  if (k.toLowerCase() === "g" && GUIDE_URL) { toggleGuide(); return; }
+  if (el === v) return;   // the video's own controls handle keys while it has focus
+  if (k === " ") { if (v) { e.preventDefault(); v.paused ? v.play() : v.pause(); } return; }
+  if (k === "ArrowLeft" || k === "ArrowRight") { if (v) { e.preventDefault(); nudge((k === "ArrowLeft" ? -1 : 1) * (e.shiftKey ? 5 : 1)); } return; }
+  const id = { s: "setStart", e: "setEnd", d: "drawBtn", n: "nextMin", p: "prevMin" }[k.toLowerCase()];
+  if (id && !$(id).disabled) { e.preventDefault(); $(id).click(); }
+});
+
+// ---- wiring ----
+$("episode").onchange = () => openEpisode(ep(), lastMinute(ep()));
+$("minute").onchange = () => gotoMinute(minute());
+$("playerMode").onchange = () => { pref("player", $("playerMode").value); loadPlayer(); };
+$("prevMin").onclick = () => { if (minute() > 0) gotoMinute(minute() - 1); };
+$("nextMin").onclick = () => { if (minute() < minuteCount(ep()) - 1) gotoMinute(minute() + 1); };
+
+// ---- my episodes, upload, sign-in ----
+const lastMinute = id => Math.min(+pref(`min_${USER.uid}_${id}`) || 0, minuteCount(id) - 1);
+
+async function refreshAssignments() {
+  const order = id => EPISODES.findIndex(x => x[0] === id);
+  ASSIGN = (await Store.myAssignments()).sort((a, b) => order(a.episode_id) - order(b.episode_id));
+  fillEpisodeSelect();
+}
+
+// status words shared by the episode list and the upload bar
+function statusOf(a) {
+  const edited = editedMap()[a.episode_id];
+  const pending = a.status !== "final" && edited && (!a.uploaded_at || edited > a.uploaded_at) &&
+                  rows.some(r => r.episode_id === a.episode_id);
+  if (a.status === "final") return { label: "Submitted", cls: "final", when: a.submitted_at, pending: false };
+  if (a.status === "draft") return { label: "Draft uploaded", cls: "draft", when: a.uploaded_at, pending };
+  return { label: rows.some(r => r.episode_id === a.episode_id) ? "In progress" : "Not started", cls: "", when: null, pending };
+}
+
+function renderHome() {
+  const local = {};
+  rows.forEach(r => (local[r.episode_id] ||= new Set()).add(+r.minute));
+  const head = `<thead><tr><th>Network</th><th>Aired (Pacific)</th><th>Program</th><th>Minutes with rows</th><th>Status</th><th></th></tr></thead>`;
+  const body = ASSIGN.length ? ASSIGN.map(a => {
+    const [id, prog, date, start] = episodeInfo(a.episode_id), n = minuteCount(id), k = local[id]?.size ?? a.minutes_done ?? 0, s = statusOf(a);
+    return `<tr>
+      <td>${network(id)}</td><td class="num">${esc(date)} ${esc(start)}</td><td>${esc(prog)}</td>
+      <td class="num"><span class="meter"><i style="width:${k / n * 100}%"></i></span>${k}/${n}</td>
+      <td><span class="st ${s.cls}">${s.label}</span>${s.when ? ` <span class="sub">${fmtTime(s.when)}</span>` : ""}
+          ${s.pending ? `<div class="warn">Changes in this browser not uploaded</div>` : ""}</td>
+      <td><button class="btn" data-open="${id}">${a.status === "final" ? "View" : "Open"}</button></td></tr>`;
+  }).join("") : `<tr><td colspan="6"><div class="empty">No episodes are assigned to you yet. Ask the admin to assign some.</div></td></tr>`;
+  $("homeTable").innerHTML = head + `<tbody>${body}</tbody>`;
+  $("homeTable").querySelectorAll("[data-open]").forEach(b => b.onclick = () => openEpisode(b.dataset.open, lastMinute(b.dataset.open)));
+}
+
+// refresh = false only right after sign-in, which has just loaded the assignments
+async function showHome(refresh = true) {
+  if (shown.ep !== null && isDirty() && !confirm("You have a row that is not saved. Discard it?")) return;
+  const v = video(); if (v) v.pause();
+  setDrawing(false);
+  shown = { ep: null, min: null };
+  try { history.replaceState(null, "", location.pathname); } catch (e) {}
+  renderHome(); show("homeView");
+  // pick up reopened, new or removed assignments and uploads made elsewhere
+  if (refresh) { try { await refreshAssignments(); renderHome(); } catch (e) { msg(e.message); } }
+}
+$("homeBtn").onclick = () => showHome();
+
+// Replaces this browser's rows for an episode with the uploaded copy.
+async function loadServerCopy(id) {
+  try {
+    const sub = await Store.getMySubmission(id);
+    if (!sub) return msg("There is no upload of this episode.");
+    const here = rows.filter(r => r.episode_id === id).length;
+    if (here && !confirm(`Replace the ${here} rows in this browser with the uploaded ${sub.rows.length} rows (${fmtTime(sub.uploaded_at)})?`)) return;
+    rows = rows.filter(r => r.episode_id !== id).concat(sub.rows);
+    save(false); markSynced(id, sub.uploaded_at);
+    if (ep() === id && !$("appView").hidden) { resetForm(); renderCC(); drawOverlay(); }
+    renderRows(); renderHome();
+    msg(`Loaded the uploaded copy (${sub.rows.length} rows).`, true);
+  } catch (e) { msg(e.message); }
+}
+const offerServerCopy = (id, text) => toast(text, "", { label: "Load uploaded copy", run: () => loadServerCopy(id) });
+
+// Opens an assigned episode. If this browser has no rows for it but an upload exists
+// (new computer, cleared browser), the uploaded rows are loaded first.
+async function openEpisode(id, m = 0) {
+  if (!assignment(id)) { msg("That episode is not assigned to you."); return showHome(); }
+  if (shown.ep !== null && shown.ep !== id && isDirty() && !confirm("You have a row that is not saved. Discard it?")) {
+    $("episode").value = shown.ep; return;
+  }
+  const a = assignment(id), hasLocal = rows.some(r => r.episode_id === id);
+  if (a.status !== "assigned" && !hasLocal) {
+    try {
+      const sub = await Store.getMySubmission(id);
+      if (sub && sub.rows.length) {
+        rows.push(...sub.rows); save(false); markSynced(id, sub.uploaded_at);
+        toast(`Loaded your uploaded ${sub.status === "final" ? "final version" : "draft"} (${sub.rows.length} rows).`, "ok");
+      }
+    } catch (e) { msg(e.message); }
+  }
+  show("appView");
+  resetForm();
+  shown = { ep: null, min: null };   // the check above already ran
+  gotoMinute(m, id);
+  if (hasLocal && serverIsNewer(a))
+    offerServerCopy(id, `There is a different upload of this episode (${fmtTime(a.uploaded_at)}, ${a.row_count} rows), probably from another computer.`);
+}
+
+function renderUpload() {
+  const a = assignment(ep());
+  if (!a || !USER) return;
+  const s = statusOf(a), n = rows.filter(r => r.episode_id === ep()).length;
+  $("upStatus").textContent = s.label;
+  const nRows = k => `${k} row${k === 1 ? "" : "s"}`;
+  $("upDetail").textContent =
+    a.status === "final" ? `Handed in ${fmtTime(a.submitted_at)} with ${nRows(a.row_count)}.` :
+    a.status === "draft" ? `Last upload ${fmtTime(a.uploaded_at)}, ${nRows(a.row_count)}.${s.pending ? " You have changes since then." : ""}` :
+    n ? `${nRows(n)}, kept only in this browser so far.` : "Nothing uploaded yet.";
+  $("uploadDraft").disabled = $("submitFinal").disabled = a.status === "final";
+  document.body.classList.toggle("locked", a.status === "final");
+  $("lockNote").textContent = a.status === "final" ? "This episode is submitted and locked. Ask the admin to reopen it if something needs to change." : "";
+}
+
+async function upload(final) {
+  const id = ep(), mine = rows.filter(r => r.episode_id === id);
+  if (locked()) return msg(LOCKED_MSG);
+  if (!mine.length) return msg("There are no rows to upload for this episode yet.");
+  if (isDirty() && !confirm("The form has a row that is not saved. Upload without it?")) return;
+  // check the server's current state first: reopened, unassigned, or a newer upload from elsewhere
+  $("uploadDraft").disabled = $("submitFinal").disabled = true;
+  $("upStatus").textContent = "Checking...";
+  try { await refreshAssignments(); } catch (e) { renderRows(); return msg(e.message); }
+  const a = assignment(id);
+  if (!a) { renderRows(); return msg("This episode is no longer assigned to you."); }
+  if (a.status === "final") { renderRows(); return msg(LOCKED_MSG); }
+  if (serverIsNewer(a) && !confirm(`The server has a different upload of this episode (${fmtTime(a.uploaded_at)}, ${a.row_count} rows), ` +
+      `probably from another computer or browser. Uploading replaces it with the ${mine.length} rows in this browser.\n\n` +
+      `OK: replace it.  Cancel: keep it (you can load it into this browser instead).`)) {
+    renderRows(); offerServerCopy(id, "Upload cancelled. The server copy is unchanged."); return;
+  }
+  if (final) {
+    const done = new Set(mine.map(r => +r.minute)), missing = [];
+    for (let i = 0; i < minuteCount(id); i++) if (!done.has(i)) missing.push(pad(i));
+    const warn = missing.length ? `\n\n${missing.length} minute(s) have no row yet: ${missing.slice(0, 15).join(", ")}${missing.length > 15 ? ", ..." : ""}` : "";
+    if (!confirm(`Submit ${mine.length} rows as your final version of this episode? It will be locked afterwards.${warn}`)) { renderRows(); return; }
+  }
+  $("uploadDraft").disabled = $("submitFinal").disabled = true;
+  $("upStatus").textContent = "Uploading...";
+  try {
+    const saved = await Store.saveSubmission(id, mine, final);
+    ASSIGN = ASSIGN.map(a => a.episode_id === id ? { ...a, ...saved, assigned_at: a.assigned_at } : a);   // no reload needed
+    markSynced(id, saved.uploaded_at);
+    if (final) { resetForm(); renderCC(); drawOverlay(); }
+    msg(final ? "Submitted. Thank you." : "Draft uploaded.", true);
+  } catch (e) { msg(e.message); try { await refreshAssignments(); } catch (e2) {} }
+  renderRows();
+}
+$("uploadDraft").onclick = () => upload(false);
+$("submitFinal").onclick = () => upload(true);
+
+// Sign-out: warn about work that is not uploaded; when everything is uploaded, remove this browser's
+// copy so the next person on a shared computer cannot read it (it is restored from the server next time).
+async function beforeSignOut() {
+  if (!USER) return true;
+  const ed = editedMap(), sy = syncedMap();
+  const unsent = [...new Set(rows.map(r => r.episode_id))].filter(id => !sy[id] || (ed[id] && ed[id] > sy[id]));
+  if (unsent.length || isDirty())
+    return confirm(`${unsent.length} episode(s) have changes that are not uploaded${isDirty() ? ", and the form has a row that is not saved" : ""}. ` +
+      "Uploaded work is safe; the rest stays in this browser for your next sign-in here and is lost if browser data is cleared.\n\nSign out anyway?");
+  try { [rowsKey(), editedKey(), syncedKey()].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  return true;
+}
+
+startAuth({
+  beforeSignOut,
+  onUser: async u => {
+    USER = u;
+    loadRows();
+    $("whoName").textContent = $("whoHome").textContent = u.name;
+    $("adminLink").hidden = u.role !== "admin";
+    try { await refreshAssignments(); } catch (e) { msg(e.message); }
+    // a link like index.html#<episode_id>/<minute> opens that episode directly
+    const [id, m] = decodeURIComponent(location.hash.slice(1)).split("/");
+    if (id && assignment(id)) openEpisode(id, m !== undefined && m !== "" ? +m : lastMinute(id));
+    else showHome(false);
+  },
+});
+</script>
+</body>
+</html>
