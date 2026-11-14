@@ -100,7 +100,7 @@
 
     <section class="card">
       <h2>Captions <span class="sub">this minute</span></h2>
-      <div class="hint">Select words to highlight a spoken reference. Click a time to jump there.</div>
+      <div class="hint" id="ccHint">Select words to highlight a spoken reference.</div>
       <div id="cc"></div>
     </section>
   </div>
@@ -202,18 +202,11 @@
   </div>
 </div>
 
-<!-- captions are shared with the offline annotator in ../annotator/ -->
-<script src="../annotator/captions.js" async onload="window.captionsLoaded && captionsLoaded()" onerror="window.captionsFailed = true; window.captionsLoaded && captionsLoaded()"></script>
 <script src="config.js"></script>
 <script src="common.js"></script>
 <script src="store.js"></script>
 <script src="store.firebase.js"></script>
 <script>
-// {episode_id: [[start_s, end_s, text], ...]}, seconds from episode start; empty if captions.js is missing
-// captions.js (2.7 MB) loads in parallel with sign-in instead of blocking the page; the panel fills in when it arrives
-const captions = () => window.CITECAST_CAPTIONS || {};
-window.captionsLoaded = () => { cueKey = ""; if (!$("appView").hidden) renderCC(); };
-
 // ---- constants and state ----
 const REF_OPTS = ["yes","no","maybe","ad","self_ad"];
 const PREF = "citecast_annotator_v1";   // prefix for small per-browser preferences
@@ -261,8 +254,14 @@ let drawing = false;
 let lastSaved = -1;      // row index to flash once in the table
 let shown = { ep: null, min: null };   // episode and minute currently loaded
 
+// Episodes and their one-minute clips come from Firestore. A minute is the clip at that position in the
+// open episode's clip list, so the number of minutes is the number of clips the episode has.
+let CLIPS = [], CLIPS_EP = null;   // parsed clips of the open episode, in time order
+let COUNTS = {};                   // {episode_id: number of clips}, for episodes that are not open
 const ep = () => $("episode").value;
 const minute = () => +$("minute").value;
+const clip = () => (CLIPS_EP === ep() && CLIPS[minute()]) || null;
+const minuteCount = id => id === CLIPS_EP ? CLIPS.length : (COUNTS[id] || 0);
 const video = () => document.querySelector("#stage video");
 const rowColor = i => COLORS[i % COLORS.length];
 
@@ -271,14 +270,9 @@ const rowColor = i => COLORS[i % COLORS.length];
 function fillEpisodeSelect() {
   const keep = $("episode").value;
   $("episode").innerHTML = "";
-  ASSIGN.forEach(a => {
-    const [id, prog, date, start] = episodeInfo(a.episode_id);
-    $("episode").add(new Option(`${network(id)}  \u00B7  ${date} ${start}  \u00B7  ${prog}`, id));
-  });
-  if (keep && !assignment(keep)) {   // keep the open episode in the picker if it was just unassigned
-    const [id, prog, date, start] = episodeInfo(keep);
-    $("episode").add(new Option(`${network(id)}  \u00B7  ${date} ${start}  \u00B7  ${prog}  (no longer assigned)`, id));
-  }
+  ASSIGN.forEach(a => $("episode").add(new Option(episodeLabel(a.episode_id), a.episode_id)));
+  if (keep && !assignment(keep))   // keep the open episode in the picker if it was just unassigned
+    $("episode").add(new Option(`${episodeLabel(keep)}  (no longer assigned)`, keep));
   if (keep) $("episode").value = keep;
 }
 
@@ -314,13 +308,16 @@ function remember() {
 // ---- player ----
 const busy = on => $("spin").classList.toggle("show", on);
 
+// The video, its time range and the archive.org link all come from the clip's url, which names the
+// recording and the seconds inside it (an episode can start partway into a longer recording).
 function loadPlayer() {
-  const id = ep(), s = minute() * 60, e = s + 60;
-  const stage = $("stage");
+  const c = clip(), stage = $("stage");
   stage.querySelectorAll("video,iframe").forEach(n => n.remove());
-  $("archiveLink").href = `https://archive.org/details/${id}/start/${s}/end/${e}`;
-  const info = EPISODES.find(x => x[0] === id);
-  $("epInfo").textContent = `${id}  ·  minute ${pad(minute())}  ·  episode seconds ${s}-${e}  ·  aired ${info[2]} ${info[3]}`;
+  if (!c || !c.archive_id) { $("modeNote").textContent = "This minute has no video link."; $("epInfo").textContent = ""; tick(); return; }
+  const id = c.archive_id, s = c.a_start, e = c.a_end, info = EPISODES.get(ep());
+  $("archiveLink").href = c.url;
+  $("epInfo").textContent = `${ep()}  ·  minute ${pad(minute())}  ·  clip ${c.id}  ·  ${id} seconds ${s}-${e}` +
+    (info ? `  ·  aired ${info.date} ${info.time} Pacific` : "");
   setDrawing(false);
   busy(true);
   if ($("playerMode").value === "embed") {
@@ -529,26 +526,31 @@ function drawOverlay() {
 }
 
 // ---- captions and highlighter ----
+// A clip's captions are either timed ({s, e, txt} lines, seconds within the clip) or one untimed block
+// (the whole minute's text from archive.org). Untimed cues have s = e = null: they can be highlighted,
+// but they cannot set start and end or follow the video.
 let cueKey = "", cueCache = [];
 function minuteCues() {
-  const key = ep() + "/" + minute();
+  const c = clip(), key = c ? c.id : "";
   if (key !== cueKey) {
-    const base = minute() * 60;
-    cueCache = (captions()[ep()] || []).map(([s, e, txt]) => ({ s: s - base, e: e - base, txt })).filter(c => c.e > 0 && c.s < 60);
+    if (!c) cueCache = [];
+    else if (c.captions) cueCache = c.captions.map(x => Array.isArray(x) ? { s: +x[0], e: +x[1], txt: String(x[2] || "") }
+                                                                         : { s: +x.s, e: +x.e, txt: String(x.txt || "") })
+                                          .filter(x => x.txt && x.e > 0 && x.s < 60);
+    else cueCache = c.caption_text.trim() ? [{ s: null, e: null, txt: c.caption_text.trim() }] : [];
     cueKey = key;
   }
   return cueCache;
 }
+const cuesTimed = () => minuteCues().some(c => c.s !== null);
 
 let nowCue = -1, ccHoldUntil = 0;
 function renderCC() {
-  const cues = minuteCues(), box = $("cc");
+  const cues = minuteCues(), box = $("cc"), timed = cuesTimed();
   nowCue = -1;
-  if (!window.CITECAST_CAPTIONS) {
-    box.innerHTML = window.captionsFailed ? '<div class="empty">Captions could not be loaded (annotator/captions.js is missing).</div>'
-                                          : '<div class="empty">Loading captions...</div>';
-    return;
-  }
+  $("ccHint").textContent = timed
+    ? "Select words to highlight a spoken reference. Click a time to jump there."
+    : "Select words to highlight a spoken reference, then set start and end by listening: these captions have no times.";
   if (!cues.length) { box.innerHTML = '<div class="empty">No captions in this minute.</div>'; return; }
   // colour per character: saved rows first, the pending selection on top
   const paint = cues.map(c => new Array(c.txt.length).fill(null));
@@ -566,6 +568,7 @@ function renderCC() {
       html += col ? `<mark style="background:${col}">${part}</mark>` : part;
       k = j;
     }
+    if (c.s === null) return `<div class="cue untimed" data-i="${i}"><span class="txt" data-i="${i}">${html}</span></div>`;
     const shownS = Math.max(0, c.s);
     return `<div class="cue" data-i="${i}"><span class="t" data-s="${shownS}">${pad(Math.floor(shownS))}s</span><span class="txt" data-i="${i}">${html}</span></div>`;
   }).join("");
@@ -577,7 +580,7 @@ function renderCC() {
 function highlightCurrentCue(t) {
   const cues = minuteCues();
   let idx = -1;
-  cues.forEach((c, i) => { if (t >= c.s && t < c.e) idx = i; });
+  cues.forEach((c, i) => { if (c.s !== null && t >= c.s && t < c.e) idx = i; });
   if (idx === nowCue) return;
   nowCue = idx;
   const box = $("cc");
@@ -616,10 +619,13 @@ $("cc").addEventListener("mouseup", () => {
   pendingHl.push(...segs);
   if (!$("f_source").value) $("f_source").value = "cc";
   if ($("f_source").value === "cc") $("f_type").value = "spoken_mention";
-  // start and end span every highlighted caption of this row; the annotator should check them against the audio
-  const hit = pendingHl.map(h => cues[h.cue]).filter(Boolean);
-  const s = Math.min(59, Math.max(0, Math.floor(Math.min(...hit.map(c => c.s)))));
-  setSE(s, Math.min(59, Math.max(s, Math.ceil(Math.max(...hit.map(c => c.e))) - 1)));
+  // timed captions: start and end span every highlighted caption of this row (the annotator checks them
+  // against the audio). Untimed captions leave start and end to the annotator.
+  const hit = pendingHl.map(h => cues[h.cue]).filter(c => c && c.s !== null);
+  if (hit.length) {
+    const s = Math.min(59, Math.max(0, Math.floor(Math.min(...hit.map(c => c.s)))));
+    setSE(s, Math.min(59, Math.max(s, Math.ceil(Math.max(...hit.map(c => c.e))) - 1)));
+  }
   renderCC(); updatePendingInfo(); updateFieldStates();
 });
 
@@ -705,7 +711,7 @@ $("cancelEdit").onclick = () => { resetForm(); renderCC(); renderRows(); };
 $("f_source").onchange = () => { if ($("f_source").value === "cc") $("f_type").value = "spoken_mention"; updateFieldStates(); };
 $("saveRow").onclick = () => {
   if (locked()) return msg(LOCKED_MSG);
-  const r = { annotator: USER.name, episode_id: ep(), minute: pad(minute()) };
+  const r = { annotator: USER.name, episode_id: ep(), minute: pad(minute()), clip_id: clip()?.id || "" };
   if ($("platformChips").querySelector('input[value="other"]').checked && !$("f_platform_other").value.trim())
     return msg("Type the platform name for Other, or untick Other.");
   writePlatforms();
@@ -734,7 +740,7 @@ $("noRef").onclick = () => {
   if (locked()) return msg(LOCKED_MSG);
   if (rows.some(r => r.episode_id === ep() && +r.minute === minute() && r.is_web_ref === "no"))
     return msg(`Minute ${pad(minute())} is already recorded as no.`);
-  const r = { annotator: USER.name, episode_id: ep(), minute: pad(minute()), boxes: [], hl: [] };
+  const r = { annotator: USER.name, episode_id: ep(), minute: pad(minute()), clip_id: clip()?.id || "", boxes: [], hl: [] };
   FIELDS.forEach(f => r[f] = ""); r.is_web_ref = "no";
   rows.push(r); lastSaved = rows.length - 1; save(); renderRows();
   const next = minute() + 1;
@@ -881,10 +887,21 @@ $("nextMin").onclick = () => { if (minute() < minuteCount(ep()) - 1) gotoMinute(
 // ---- my episodes, upload, sign-in ----
 const lastMinute = id => Math.min(+pref(`min_${USER.uid}_${id}`) || 0, minuteCount(id) - 1);
 
+// Loads the assignments, plus the episode records and clip counts not loaded yet (one read each).
 async function refreshAssignments() {
-  const order = id => EPISODES.findIndex(x => x[0] === id);
-  ASSIGN = (await Store.myAssignments()).sort((a, b) => order(a.episode_id) - order(b.episode_id));
+  const list = await Store.myAssignments(), ids = list.map(a => a.episode_id);
+  const needEp = ids.filter(id => !EPISODES.has(id)), needCount = ids.filter(id => !(id in COUNTS));
+  const [eps, counts] = await Promise.all([needEp.length ? Store.getEpisodes(needEp) : [], needCount.length ? Store.clipCounts(needCount) : {}]);
+  addEpisodes(eps); Object.assign(COUNTS, counts);
+  ASSIGN = list.sort((a, b) => episodeOrder(a.episode_id) - episodeOrder(b.episode_id) || a.episode_id.localeCompare(b.episode_id));
   fillEpisodeSelect();
+}
+
+// Loads the open episode's clips (once per episode per page load).
+const CLIP_CACHE = {};
+async function loadClips(id) {
+  if (!CLIP_CACHE[id]) CLIP_CACHE[id] = (await Store.getClips(id)).map(parseClip);
+  CLIPS = CLIP_CACHE[id]; CLIPS_EP = id; COUNTS[id] = CLIPS.length; cueKey = "";
 }
 
 // status words shared by the episode list and the upload bar
@@ -902,10 +919,10 @@ function renderHome() {
   rows.forEach(r => (local[r.episode_id] ||= new Set()).add(+r.minute));
   const head = `<thead><tr><th>Network</th><th>Aired (Pacific)</th><th>Program</th><th>Minutes with rows</th><th>Status</th><th></th></tr></thead>`;
   const body = ASSIGN.length ? ASSIGN.map(a => {
-    const [id, prog, date, start] = episodeInfo(a.episode_id), n = minuteCount(id), k = local[id]?.size ?? a.minutes_done ?? 0, s = statusOf(a);
+    const id = a.episode_id, e = EPISODES.get(id), n = minuteCount(id), k = local[id]?.size ?? a.minutes_done ?? 0, s = statusOf(a);
     return `<tr>
-      <td>${network(id)}</td><td class="num">${esc(date)} ${esc(start)}</td><td>${esc(prog)}</td>
-      <td class="num"><span class="meter"><i style="width:${k / n * 100}%"></i></span>${k}/${n}</td>
+      <td>${esc(network(id))}</td><td class="num">${e ? `${esc(e.date)} ${esc(e.time)}` : ""}</td><td>${e ? esc(e.title) : `${esc(id)} (episode not found)`}</td>
+      <td class="num"><span class="meter"><i style="width:${n ? k / n * 100 : 0}%"></i></span>${k}/${n}</td>
       <td><span class="st ${s.cls}">${s.label}</span>${s.when ? ` <span class="sub">${fmtTime(s.when)}</span>` : ""}
           ${s.pending ? `<div class="warn">Changes in this browser not uploaded</div>` : ""}</td>
       <td><button class="btn" data-open="${id}">${a.status === "final" ? "View" : "Open"}</button></td></tr>`;
@@ -950,6 +967,9 @@ async function openEpisode(id, m = 0) {
   if (shown.ep !== null && shown.ep !== id && isDirty() && !confirm("You have a row that is not saved. Discard it?")) {
     $("episode").value = shown.ep; return;
   }
+  if (!EPISODES.has(id)) { msg("This episode is not in the episode list any more. Ask the admin to remove it."); return showHome(false); }
+  try { await loadClips(id); } catch (e) { msg(e.message); return showHome(false); }
+  if (!CLIPS.length) { msg("This episode has no clips yet."); return showHome(false); }
   const a = assignment(id), hasLocal = rows.some(r => r.episode_id === id);
   if (a.status !== "assigned" && !hasLocal) {
     try {

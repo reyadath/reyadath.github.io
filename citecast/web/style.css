@@ -127,6 +127,10 @@
   .cue .txt { white-space:pre-wrap; color:var(--fg2); }
   .cue.now .txt { color:var(--fg); }
   .cue mark { color:inherit; padding:1px 0; }
+  /* one untimed block for the whole minute: no time column, easier to read as a paragraph */
+  .cue.untimed { padding:10px 12px; line-height:1.6; }
+  .cue.untimed:hover { background:none; }
+  .cue.untimed .txt { color:var(--fg); }
   .empty { padding:24px 16px; color:var(--muted); font-size:14px; }
 
   /* form */

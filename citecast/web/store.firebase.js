@@ -8,6 +8,8 @@
      submissions/{uid}__{ep}     uid, annotator, username, episode_id, status ("draft" | "final"),
                                  uploaded_at, submitted_at, row_count, minutes_done          (owner writes)
      submission_rows/{uid}__{ep} uid, episode_id, rows: [row, ...]                            (owner writes)
+     episodes/{ep}               id, channel, broadcast_start, broadcast_start_pacific, program_title (read only here)
+     clips/{ep}_{seconds}        id, episode_id, start_seconds, end_seconds, url, caption_text (read only here)
    The draft/final status lives only on the submission, so annotators never need to write assignments.
    Rows are kept apart from the summary so lists and progress never download them; they are read
    only to restore work or export CSVs. Both records are written together in one batch.
@@ -19,7 +21,7 @@
   if (CFG.backend !== "firebase") return;
 
   const SDK = "https://www.gstatic.com/firebasejs/13.1.0/";   // released 2026-10-21
-  const ROW_KEYS = ["annotator","episode_id","minute","is_web_ref","start","end","source","type",
+  const ROW_KEYS = ["annotator","episode_id","minute","clip_id","is_web_ref","start","end","source","type",
                     "web_reference","is_social","social_platform","notes","boxes","hl"];
   const aid = (uid, ep) => `${uid}__${ep}`;
   const now = () => new Date().toISOString();
@@ -93,6 +95,8 @@
     uploaded_at: s ? str(s.uploaded_at) : null, submitted_at: s ? str(s.submitted_at) : null,
     row_count: s ? num(s.row_count) : 0, minutes_done: s ? num(s.minutes_done) : 0 });
   async function all(q) { const { fsM } = await fb(); return (await fsM.getDocs(q)).docs.map(d => d.data()); }
+  // episode record with the timestamp turned into milliseconds, for sorting
+  const episodeOut = (id, x) => ({ ...x, id, broadcast_start_ms: x.broadcast_start?.toMillis ? x.broadcast_start.toMillis() : 0, broadcast_start: undefined });
 
   window.Store = {
     backend: "firebase",
@@ -125,6 +129,35 @@
       await fsM.updateDoc(fsM.doc(db, "annotators", p.uid), { must_change_password: false });
       ME = { ...p, must_change_password: false };
       return publicUser(ME);
+    }),
+
+    // ---- episodes and clips (read only) ----
+    // Every episode; the admin page uses this for the assignment table.
+    listEpisodes: guard(async () => {
+      const { fsM, db } = await fb();
+      return (await fsM.getDocs(fsM.collection(db, "episodes"))).docs.map(d => episodeOut(d.id, d.data()));
+    }),
+    // Only the given episodes (one read each); missing ids are left out.
+    getEpisodes: guard(async ids => {
+      const { fsM, db } = await fb();
+      const snaps = await Promise.all(ids.map(id => fsM.getDoc(fsM.doc(db, "episodes", id))));
+      return snaps.filter(s => s.exists()).map(s => episodeOut(s.id, s.data()));
+    }),
+    // All clips of one episode, in time order (sorted here, so no composite index is needed).
+    getClips: guard(async episodeId => {
+      const { fsM, db } = await fb();
+      const q = fsM.query(fsM.collection(db, "clips"), fsM.where("episode_id", "==", episodeId));
+      return (await fsM.getDocs(q)).docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (+a.start_seconds || 0) - (+b.start_seconds || 0));
+    }),
+    // {episode_id: number of clips}, using count queries (about one read per episode).
+    clipCounts: guard(async ids => {
+      const { fsM, db } = await fb();
+      const counts = await Promise.all(ids.map(async id => {
+        const q = fsM.query(fsM.collection(db, "clips"), fsM.where("episode_id", "==", id));
+        return [id, (await fsM.getCountFromServer(q)).data().count];
+      }));
+      return Object.fromEntries(counts);
     }),
 
     // ---- annotator ----

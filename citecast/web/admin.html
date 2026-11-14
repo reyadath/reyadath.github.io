@@ -94,7 +94,10 @@ let DATA = { annotators: [], assignments: [] };
 const pref = (k, v) => { try { if (v === undefined) return localStorage.getItem("citecast_admin_" + k); localStorage.setItem("citecast_admin_" + k, v); } catch (e) { return null; } };
 const userById = uid => DATA.annotators.find(a => a.uid === uid);
 const annotatorsOnly = () => DATA.annotators.filter(a => a.role === "annotator").sort((a, b) => a.name.localeCompare(b.name));
-const epLabel = id => { const [, prog, date] = episodeInfo(id); return `${network(id)} · ${date} · ${prog}`; };
+const epLabel = id => episodeLabel(id);
+// {episode_id: number of clips}, read for assigned episodes only (one count query each)
+let COUNTS = {};
+const minuteCount = id => COUNTS[id] || 0;
 const STATUS = { assigned: ["Not uploaded", ""], draft: ["Draft uploaded", "draft"], final: ["Submitted", "final"] };
 // upload fields come from annotators: show them only as plain numbers
 const n0 = v => Number.isFinite(+v) ? Math.max(0, Math.floor(+v)) : 0;
@@ -119,7 +122,12 @@ function tab(name) {
 document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => tab(b.dataset.tab));
 
 async function reload() {
-  try { DATA = await Store.adminOverview(); } catch (e) { return msg(e.message); }
+  try {
+    const [d, eps] = await Promise.all([Store.adminOverview(), Store.listEpisodes()]);
+    DATA = d; EPISODES.clear(); addEpisodes(eps);
+    const need = [...new Set(DATA.assignments.map(a => a.episode_id))].filter(id => EPISODES.has(id) && !(id in COUNTS));
+    if (need.length) Object.assign(COUNTS, await Store.clipCounts(need));
+  } catch (e) { return msg(e.message); }
   renderProgress(); renderMatrix(); renderAccounts();
 }
 $("refresh").onclick = async () => { $("refresh").disabled = true; await reload(); $("refresh").disabled = false; msg("Up to date.", true); };
@@ -129,7 +137,7 @@ function renderProgress() {
   const keep = $("fAnn").value;
   $("fAnn").innerHTML = `<option value="">All</option>` + annotatorsOnly().map(a => `<option value="${a.uid}">${esc(a.name)}</option>`).join("");
   $("fAnn").value = keep;
-  const order = id => EPISODES.findIndex(x => x[0] === id);
+  const order = episodeOrder;
   const list = DATA.assignments
     .filter(a => (!$("fAnn").value || a.uid === $("fAnn").value) && (!$("fStatus").value || a.status === $("fStatus").value))
     .sort((a, b) => (userById(a.uid)?.name || "").localeCompare(userById(b.uid)?.name || "") || order(a.episode_id) - order(b.episode_id));
@@ -144,7 +152,7 @@ function renderProgress() {
     return `<tr><td>${esc(u?.name || a.uid)}</td><td>${esc(epLabel(a.episode_id))}</td>
       <td><span class="st ${cls}">${label}</span></td>
       <td class="num">${a.status === "assigned" ? "" : rc}</td>
-      <td class="num">${a.status === "assigned" ? "" : `<span class="meter"><i style="width:${md / n * 100}%"></i></span>${md}/${n}`}</td>
+      <td class="num">${a.status === "assigned" ? "" : `<span class="meter"><i style="width:${n ? md / n * 100 : 0}%"></i></span>${md}/${n}`}</td>
       <td class="num">${fmtTime(a.submitted_at || a.uploaded_at)}</td><td><div class="acts">${acts}</div></td></tr>`;
   }).join("") : `<tr><td colspan="7"><div class="empty">Nothing matches these filters.</div></td></tr>`;
   $("progTable").innerHTML = head + `<tbody>${body}</tbody>`;
@@ -182,7 +190,10 @@ function renderMatrix() {
   const anns = annotatorsOnly().filter(a => a.active);
   const by = {}; DATA.assignments.forEach(a => by[a.uid + "|" + a.episode_id] = a);
   const head = `<thead><tr><th>Episode</th>${anns.map(a => `<th>${esc(a.name)}<div class="sub">${DATA.assignments.filter(x => x.uid === a.uid).length} episodes</div></th>`).join("")}</tr></thead>`;
-  const body = EPISODES.map(([id]) => `<tr><td>${esc(epLabel(id))}</td>${anns.map(a => {
+  // every episode, plus assigned ids that are no longer in the episode list (listed last, so they can be unassigned)
+  const ids = [...new Set([...EPISODES.keys(), ...DATA.assignments.map(a => a.episode_id)])]
+    .sort((a, b) => episodeOrder(a) - episodeOrder(b) || a.localeCompare(b));
+  const body = ids.map(id => `<tr><td>${esc(epLabel(id))}</td>${anns.map(a => {
     const x = by[a.uid + "|" + id];
     return `<td class="${x && x.status !== "assigned" ? "s-" + x.status : ""}"><input type="checkbox" data-a="${a.uid}|${id}" ${x ? "checked" : ""}
       title="${esc(a.name)}: ${x ? STATUS[x.status][0] : "not assigned"}"></td>`;
