@@ -99,7 +99,8 @@
     </section>
 
     <section class="card">
-      <h2>Captions <span class="sub">this minute</span></h2>
+      <h2>Captions <span class="sub">this minute</span>
+        <button class="btn ghost small" id="clearHl" type="button" title="Remove the highlighted words from the row you are filling in; the rest of the form stays" hidden>Clear highlight</button></h2>
       <div class="hint" id="ccHint">Select words to highlight a spoken reference.</div>
       <div id="cc"></div>
     </section>
@@ -176,6 +177,17 @@
 </div>
 
 <div id="toasts"></div>
+<div id="switchDlg" class="modal" role="dialog" aria-modal="true" aria-labelledby="switchTitle">
+  <div class="panel">
+    <h3 id="switchTitle">This episode is not submitted yet</h3>
+    <p id="switchMsg"></p>
+    <div class="dlgbtns">
+      <button class="btn primary" id="swStay">Stay and finish this episode</button>
+      <button class="btn" id="swUpload">Upload draft and switch</button>
+      <button class="btn ghost" id="swGo">Switch anyway</button>
+    </div>
+  </div>
+</div>
 <aside id="guide" aria-label="Annotation guide" aria-hidden="true">
   <div class="guidebar">
     <b>Annotation guide</b>
@@ -617,6 +629,9 @@ $("cc").addEventListener("mouseup", () => {
   sel.removeAllRanges();
   if (!segs.length) return;
   pendingHl.push(...segs);
+  // the highlighted words go into web_reference, unless the annotator has typed their own text there
+  const said = hlText(), wr = $("f_web_reference");
+  if (said && (!wr.value.trim() || wr.value === autoRef)) { wr.value = said; autoRef = said; }
   if (!$("f_source").value) $("f_source").value = "cc";
   if ($("f_source").value === "cc") $("f_type").value = "spoken_mention";
   // timed captions: start and end span every highlighted caption of this row (the annotator checks them
@@ -694,13 +709,29 @@ function updatePendingInfo() {
   if (pendingBoxes.length) parts.push(`${pendingBoxes.length} box${pendingBoxes.length > 1 ? "es" : ""}`);
   if (pendingHl.length) parts.push(`${pendingHl.length} highlight${pendingHl.length > 1 ? "s" : ""}`);
   $("pendingInfo").innerHTML = parts.map(p => `<span class="badge">${p}</span>`).join("");
+  $("clearHl").hidden = !pendingHl.length;
 }
+
+// Text of the highlighted words of the row being filled in, in caption order.
+let autoRef = null;   // the web_reference value last filled in from highlights (null: the annotator's own text)
+function hlText() {
+  const cues = minuteCues();
+  return pendingHl.slice().sort((x, y) => x.cue - y.cue || x.a - y.a)
+    .map(h => (cues[h.cue]?.txt || "").slice(h.a, h.b).trim()).filter(Boolean).join(" ");
+}
+// Removes the highlights of the row being filled in, and the web_reference text they filled in.
+$("clearHl").onclick = () => {
+  if (locked()) return msg(LOCKED_MSG);
+  if (autoRef !== null && $("f_web_reference").value === autoRef) $("f_web_reference").value = "";
+  pendingHl = []; autoRef = null;
+  renderCC(); updatePendingInfo(); updateFieldStates();
+};
 
 function resetForm() {
   FIELDS.forEach(f => $("f_" + f).value = "");
   readPlatforms();
   $("f_is_web_ref").value = "yes";
-  pendingBoxes = []; pendingHl = []; editing = -1;
+  pendingBoxes = []; pendingHl = []; editing = -1; autoRef = null;
   $("formTitle").textContent = "New row";
   $("saveLbl").textContent = "Add row";
   $("formCard").classList.remove("editing");
@@ -759,6 +790,7 @@ function startEdit(i) {
   FIELDS.forEach(f => $("f_" + f).value = r[f] ?? "");
   readPlatforms();
   pendingBoxes = (r.boxes || []).slice(); pendingHl = (r.hl || []).slice(); editing = i;
+  autoRef = r.web_reference && r.web_reference === hlText() ? r.web_reference : null;   // still the highlighted words? then it follows them
   $("formTitle").textContent = `Editing row #${i + 1}`;
   $("saveLbl").textContent = "Save changes";
   $("formCard").classList.add("editing");
@@ -856,6 +888,7 @@ document.querySelectorAll(".guideBtn").forEach(b => { b.hidden = !GUIDE_URL; b.o
 $("guideClose").onclick = () => toggleGuide(false);
 
 document.addEventListener("keydown", e => {
+  if ($("switchDlg").classList.contains("open")) return;   // the dialog handles its own keys
   if (e.key === "Escape" && guideOpen()) { toggleGuide(false); return; }
   if ($("appView").hidden) return;   // shortcuts only on the annotation screen
   const el = e.target, typing = /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable;
@@ -878,7 +911,45 @@ document.addEventListener("keydown", e => {
 });
 
 // ---- wiring ----
-$("episode").onchange = () => openEpisode(ep(), lastMinute(ep()));
+// Switching episodes from the picker: if the episode being left has rows but is not submitted, ask first.
+// "stay" keeps it open and points at Submit final; "upload" uploads a draft, then switches; "go" just switches.
+function askBeforeSwitch(from) {
+  const a = assignment(from), n = rows.filter(r => r.episode_id === from).length;
+  if (!a || a.status === "final" || !n) return Promise.resolve("go");
+  const s = statusOf(a), unsent = a.status === "assigned" || s.pending;
+  $("switchMsg").textContent = `${episodeLabel(from)} has ${n} row${n > 1 ? "s" : ""} and is not submitted. ` +
+    (unsent ? "Some of your work is only in this browser. " : "Your latest work is uploaded as a draft. ") +
+    "When every minute is done, use Submit final.";
+  $("swUpload").hidden = !unsent;
+  $("switchDlg").classList.add("open");
+  $("swStay").focus();
+  return new Promise(res => {
+    const done = v => { $("switchDlg").classList.remove("open"); ["swStay","swUpload","swGo"].forEach(k => $(k).onclick = null); res(v); };
+    $("swStay").onclick = () => done("stay");
+    $("swUpload").onclick = () => done("upload");
+    $("swGo").onclick = () => done("go");
+    $("switchDlg").onclick = e => { if (e.target === $("switchDlg")) done("stay"); };
+    $("switchDlg").onkeydown = e => { if (e.key === "Escape") { e.stopPropagation(); done("stay"); } };
+  });
+}
+$("episode").onchange = async () => {
+  const target = ep(), from = shown.ep;
+  if (from && from !== target) {
+    $("episode").value = from;   // the open episode stays selected while the annotator decides
+    const choice = await askBeforeSwitch(from);
+    if (choice === "stay") {
+      $("submitFinal").scrollIntoView({ behavior: "smooth", block: "center" });
+      $("submitFinal").classList.add("flash"); setTimeout(() => $("submitFinal").classList.remove("flash"), 1600);
+      return;
+    }
+    if (choice === "upload") {
+      await upload(false);
+      if (statusOf(assignment(from) || {}).pending || assignment(from)?.status === "assigned") return;   // upload failed or was cancelled
+    }
+    $("episode").value = target;
+  }
+  openEpisode(target, lastMinute(target));
+};
 $("minute").onchange = () => gotoMinute(minute());
 $("playerMode").onchange = () => { pref("player", $("playerMode").value); loadPlayer(); };
 $("prevMin").onclick = () => { if (minute() > 0) gotoMinute(minute() - 1); };
