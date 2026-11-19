@@ -9,7 +9,7 @@
                                  uploaded_at, submitted_at, row_count, minutes_done          (owner writes)
      submission_rows/{uid}__{ep} uid, episode_id, rows: [row, ...]                            (owner writes)
      episodes/{ep}               id, channel, broadcast_start, broadcast_start_pacific, program_title (read only here)
-     clips/{ep}_{seconds}        id, episode_id, start_seconds, end_seconds, url, caption_text (read only here)
+     clips/{ep}_{seconds}        id, episode_id, start_seconds, end_seconds, url, caption_text, captions, caption_src (read only here)
    The draft/final status lives only on the submission, so annotators never need to write assignments.
    Rows are kept apart from the summary so lists and progress never download them; they are read
    only to restore work or export CSVs. Both records are written together in one batch.

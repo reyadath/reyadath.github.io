@@ -110,7 +110,7 @@
     <section class="card" id="formCard">
       <h2><span id="formTitle">New row</span><span class="badges" id="pendingInfo"></span></h2>
       <div class="note" id="lockNote"></div>
-      <div class="fld">is_web_ref
+      <div class="fld">Is this a web reference?
         <div class="seg" id="segRef"><span id="segPill"></span></div>
         <select id="f_is_web_ref" hidden>
           <option>yes</option><option>no</option><option>maybe</option><option>ad</option><option>self_ad</option>
@@ -221,6 +221,8 @@
 <script>
 // ---- constants and state ----
 const REF_OPTS = ["yes","no","maybe","ad","self_ad"];
+// button text annotators see; the stored and exported value is the key (same wording as the guide)
+const REF_LABELS = { yes: "Yes", no: "No", maybe: "Not sure", ad: "Sponsor ad", self_ad: "Network's own ad" };
 const PREF = "citecast_annotator_v1";   // prefix for small per-browser preferences
 const COLORS = ["rgba(66,133,244,.35)","rgba(234,67,53,.35)","rgba(52,168,83,.35)","rgba(171,71,188,.35)",
                 "rgba(255,112,67,.4)","rgba(0,172,193,.35)","rgba(124,179,66,.4)","rgba(240,98,146,.35)"];
@@ -545,11 +547,11 @@ let cueKey = "", cueCache = [];
 function minuteCues() {
   const c = clip(), key = c ? c.id : "";
   if (key !== cueKey) {
-    if (!c) cueCache = [];
-    else if (c.captions) cueCache = c.captions.map(x => Array.isArray(x) ? { s: +x[0], e: +x[1], txt: String(x[2] || "") }
-                                                                         : { s: +x.s, e: +x.e, txt: String(x.txt || "") })
-                                          .filter(x => x.txt && x.e > 0 && x.s < 60);
-    else cueCache = c.caption_text.trim() ? [{ s: null, e: null, txt: c.caption_text.trim() }] : [];
+    // timed lines when the clip has any, else the untimed text (fallback)
+    cueCache = !c ? [] : (c.captions || []).map(x => Array.isArray(x) ? { s: +x[0], e: +x[1], txt: String(x[2] || "") }
+                                                                     : { s: +x.s, e: +x.e, txt: String(x.txt || "") })
+                                         .filter(x => x.txt && x.e > 0 && x.s < 60);
+    if (c && !cueCache.length && c.caption_text.trim()) cueCache = [{ s: null, e: null, txt: c.caption_text.trim() }];
     cueKey = key;
   }
   return cueCache;
@@ -684,7 +686,7 @@ $("f_platform_other").oninput = writePlatforms;
 
 REF_OPTS.forEach(v => {
   const b = document.createElement("button");
-  b.type = "button"; b.textContent = v; b.dataset.v = v;
+  b.type = "button"; b.textContent = REF_LABELS[v]; b.dataset.v = v; b.title = `Saved as "${v}"`;
   b.onclick = () => { $("f_is_web_ref").value = v; updateFieldStates(); };
   $("segRef").appendChild(b);
 });
