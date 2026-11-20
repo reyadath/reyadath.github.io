@@ -516,13 +516,13 @@ function drawOverlay() {
   const t = v.currentTime, W = c.width, H = c.height, d = window.devicePixelRatio || 1;
   const box = (b, color, label, dashed) => {
     const X = b.x * W, Y = b.y * H, BW = b.w * W, BH = b.h * H;
-    g.lineWidth = 2.5 * d; g.strokeStyle = color; g.setLineDash(dashed ? [8 * d, 5 * d] : []);
+    g.lineWidth = 3.5 * d; g.strokeStyle = color; g.setLineDash(dashed ? [8 * d, 5 * d] : []);
     g.strokeRect(X, Y, BW, BH);
     if (label) {
       g.font = `600 ${12 * d}px "IBM Plex Sans", system-ui, sans-serif`;
       const tw = g.measureText(label).width + 10 * d, th = 17 * d;
       const ly = Y - th < 0 ? Y : Y - th;
-      g.fillStyle = color; g.fillRect(X - 1.25 * d, ly, tw, th);
+      g.fillStyle = color; g.fillRect(X - 1.75 * d, ly, tw, th);
       g.fillStyle = color === "#ffd600" ? "#3a2f00" : "#fff";
       g.fillText(label, X + 4 * d, ly + 12.5 * d);
     }
