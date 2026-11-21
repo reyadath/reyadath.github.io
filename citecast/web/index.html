@@ -366,7 +366,8 @@ function loadPlayer() {
     v.addEventListener("error", () => { busy(false); $("modeNote").textContent = "Video failed to load. Check the internet connection, or try the Archive embed."; });
     stage.insertBefore(v, $("overlay"));
     $("modeNote").textContent = "";
-    ["setStart","setEnd","drawBtn","speed"].forEach(k => $(k).disabled = false);
+    ["setStart","setEnd","speed"].forEach(k => $(k).disabled = false);
+    syncDrawBtn();
   }
   tick();
 }
@@ -481,6 +482,15 @@ function setDrawing(on) {
 }
 $("drawBtn").onclick = () => setDrawing(!drawing);
 $("clearBoxes").onclick = () => { pendingBoxes = []; drawOverlay(); updatePendingInfo(); };
+// One box per row: each reference on screen is its own row with its own fields (a web address and a web page
+// screenshot in the same frame are two rows). Draw box is off once the row has a box; Clear boxes turns it back on.
+function syncDrawBtn() {
+  const btn = $("drawBtn"), full = pendingBoxes.length > 0;
+  btn.dataset.title ??= btn.title;
+  btn.disabled = $("playerMode").value === "embed" || full;
+  btn.title = full ? "This row has its box. Add the row, then draw the next reference's box on a new row (or Clear boxes to redraw)." : btn.dataset.title;
+  if (full && drawing) setDrawing(false);
+}
 
 let dragStart = null, dragNow = null;
 $("overlay").addEventListener("pointerdown", ev => {
@@ -501,7 +511,7 @@ $("overlay").addEventListener("pointerup", () => {
   const x = Math.min(dragStart[0], dragNow[0]), y = Math.min(dragStart[1], dragNow[1]);
   const w = Math.abs(dragNow[0] - dragStart[0]), h = Math.abs(dragNow[1] - dragStart[1]);
   dragStart = dragNow = null;
-  if (w > 0.01 && h > 0.01) {
+  if (w > 0.01 && h > 0.01 && !pendingBoxes.length) {
     const t = nowSec() ?? 0;
     pendingBoxes.push({ t, x, y, w, h });
     // a box means a visual reference
@@ -719,6 +729,7 @@ function updatePendingInfo() {
   if (pendingHl.length) parts.push(`${pendingHl.length} highlight${pendingHl.length > 1 ? "s" : ""}`);
   $("pendingInfo").innerHTML = parts.map(p => `<span class="badge">${p}</span>`).join("");
   $("clearHl").hidden = !pendingHl.length;
+  syncDrawBtn();
 }
 
 // Text of the highlighted words of the row being filled in, in caption order.
@@ -768,6 +779,7 @@ $("saveRow").onclick = () => {
   if (r.source === "cc" && r.type !== "spoken_mention") return msg("Source \"Spoken (captions)\" must use type \"Spoken mention\".");
   if (r.source === "visual" && r.type === "spoken_mention") return msg("\"Spoken mention\" is only for source \"Spoken (captions)\".");
   if (r.source === "visual" && !r.boxes.length) return msg("On-screen rows need a bounding box: pause on the frame and use Draw box.");
+  if (r.boxes.length > 1) return msg("One box per row: use Clear boxes and draw one box. Put each other reference in its own row.");
   if (ref === "ad" && (r.source || r.type || r.web_reference)) return msg("ad rows take only start and end (see guide section 6).");
   const wasEdit = editing >= 0;
   if (wasEdit) rows[editing] = r; else rows.push(r);
