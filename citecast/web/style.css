@@ -132,10 +132,6 @@
   .cue.untimed:hover { background:none; }
   .cue.untimed .txt { color:var(--fg); }
   .empty { padding:24px 16px; color:var(--muted); font-size:14px; }
-  /* the untimed text under timed captions, for copying exact addresses */
-  #ccTextWrap { margin-top:14px; }
-  #ccTextWrap .hint { margin:0 0 6px; }
-  #ccText { max-height:140px; overflow:auto; border:1px solid var(--line); background:#fff; padding:10px 12px; line-height:1.6; color:var(--fg); white-space:pre-wrap; }
 
   /* form */
   .seg { position:relative; display:inline-flex; align-self:flex-start; border:1px solid var(--line2); border-radius:var(--r); background:#fff; }

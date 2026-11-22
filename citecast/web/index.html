@@ -103,11 +103,6 @@
         <button class="btn ghost small" id="clearHl" type="button" title="Remove the highlighted words from the row you are filling in; the rest of the form stays" hidden>Clear highlight</button></h2>
       <div class="hint" id="ccHint">Select words to highlight a spoken reference.</div>
       <div id="cc"></div>
-      <!-- shown with timed captions: their source drops punctuation, so the minute's untimed text is shown too -->
-      <div id="ccTextWrap" hidden>
-        <div class="hint">Same minute with punctuation (no times). Copy web addresses, @handles and #hashtags from here into web_reference.</div>
-        <div id="ccText"></div>
-      </div>
     </section>
   </div>
 
@@ -577,8 +572,6 @@ let nowCue = -1, ccHoldUntil = 0;
 function renderCC() {
   const cues = minuteCues(), box = $("cc"), timed = cuesTimed();
   nowCue = -1;
-  const full = timed ? (clip()?.caption_text || "").trim() : "";
-  $("ccTextWrap").hidden = !full; $("ccText").textContent = full;
   $("ccHint").textContent = timed
     ? "Select words to highlight a spoken reference. Click a time to jump there."
     : "Select words to highlight a spoken reference, then set start and end by listening: these captions have no times.";
@@ -719,7 +712,7 @@ function updateFieldStates() {
     pill.style.transform = `translateX(${a.offsetLeft}px)`;
     requestAnimationFrame(() => $("segRef").classList.add("ready"));
   }
-  const minimal = ref === "no" || ref === "ad";
+  const minimal = ref === "no" || ref === "ad" || ref === "self_ad";
   ["source","type","web_reference","social_platform"].forEach(f => $("f_" + f).closest(".fld").classList.toggle("dim", minimal));
 }
 
@@ -769,8 +762,8 @@ $("saveRow").onclick = () => {
   FIELDS.forEach(f => r[f] = $("f_" + f).value.trim());
   r.boxes = pendingBoxes.slice(); r.hl = pendingHl.slice();
   const ref = r.is_web_ref;
-  // no and ad rows carry no platform; every other row is social exactly when a platform is ticked
-  if (ref === "no" || ref === "ad") { r.social_platform = ""; r.is_social = ""; }
+  // no, ad and self_ad rows carry no platform; every other row is social exactly when a platform is ticked
+  if (ref === "no" || ref === "ad" || ref === "self_ad") { r.social_platform = ""; r.is_social = ""; }
   else r.is_social = r.social_platform ? "yes" : "no";
   if (ref !== "no" && (r.start === "" || r.end === "")) return msg("Set start and end (drag S and E on the timeline).");
   if (r.start !== "" && r.end !== "" && +r.end < +r.start) return msg("End is before start.");
@@ -780,7 +773,7 @@ $("saveRow").onclick = () => {
   if (r.source === "visual" && r.type === "spoken_mention") return msg("\"Spoken mention\" is only for source \"Spoken (captions)\".");
   if (r.source === "visual" && !r.boxes.length) return msg("On-screen rows need a bounding box: pause on the frame and use Draw box.");
   if (r.boxes.length > 1) return msg("One box per row: use Clear boxes and draw one box. Put each other reference in its own row.");
-  if (ref === "ad" && (r.source || r.type || r.web_reference)) return msg("ad rows take only start and end (see guide section 6).");
+  if ((ref === "ad" || ref === "self_ad") && (r.source || r.type || r.web_reference)) return msg("Ad rows (sponsor or network's own) take only start and end (see guide section 6).");
   const wasEdit = editing >= 0;
   if (wasEdit) rows[editing] = r; else rows.push(r);
   lastSaved = wasEdit ? editing : rows.length - 1;
