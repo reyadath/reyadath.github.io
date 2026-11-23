@@ -694,7 +694,8 @@ $("platformChips").onchange = e => {
   writePlatforms(); if ($("platformChips").querySelector('input[value="other"]').checked && !$("f_platform_other").value) $("f_platform_other").focus(); };
 $("f_platform_other").oninput = writePlatforms;
 
-REF_OPTS.forEach(v => {
+// "no" has no button: the "No reference in this minute" button records it. Old "no" rows still load for editing.
+REF_OPTS.filter(v => v !== "no").forEach(v => {
   const b = document.createElement("button");
   b.type = "button"; b.textContent = REF_LABELS[v]; b.dataset.v = v; b.title = `Saved as "${v}"`;
   b.onclick = () => { $("f_is_web_ref").value = v; updateFieldStates(); };
@@ -711,7 +712,7 @@ function updateFieldStates() {
     pill.style.width = a.offsetWidth + "px";
     pill.style.transform = `translateX(${a.offsetLeft}px)`;
     requestAnimationFrame(() => $("segRef").classList.add("ready"));
-  }
+  } else if (!a) pill.style.width = "0px";   // a "no" row being edited: no button is active
   const minimal = ref === "no" || ref === "ad" || ref === "self_ad";
   ["source","type","web_reference","social_platform"].forEach(f => $("f_" + f).closest(".fld").classList.toggle("dim", minimal));
 }
